@@ -15,3 +15,17 @@ print(set(map1.keys()).issubset(mapBig.keys()))
 
 word = "Hello"
 print(word[0 : 4 + 1])
+
+arr = [1, 2, 3]
+stringArr = "".join([str(x)  for x in arr])
+print(stringArr, type(stringArr))
+
+per = [[1, 2, 3], [2, 3, 1]]
+
+print([1, 2, 3] == per[0])
+
+
+target = []
+print("target before: ", target)
+target = per[1][:]
+print(target)
