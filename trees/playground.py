@@ -1,5 +1,7 @@
 from traversal.preOrderTraversal import preOrderTraversal
 from classes.tree import TreeNode
+from traversal.inOrderTraveral import inOrderTraversal
+from traversal.postOrderTraversal import postOrderTraversal
 from utils.printTree import print_tree_pretty
 
 
@@ -18,4 +20,6 @@ root.right.left = TreeNode(10)
 
 
 print_tree_pretty(root)
-print(preOrderTraversal(root))
+#print(preOrderTraversal(root))
+#print(inOrderTraversal(root))
+print(postOrderTraversal(root))
