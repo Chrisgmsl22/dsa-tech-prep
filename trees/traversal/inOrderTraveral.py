@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from classes.tree import TreeNode
+from utils.tree_node import TreeNode
 
 
 def inOrderTraversal(node: TreeNode):
