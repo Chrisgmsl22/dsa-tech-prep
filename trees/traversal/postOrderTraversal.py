@@ -8,7 +8,7 @@ from utils.tree_node import TreeNode
 def postOrderTraversal(node: TreeNode):
     res = []
     def recurse(n: TreeNode):
-        if not n: # If we've reached the end, then we stop recursing
+        if n is None: # If we've reached the end, then we stop recursing
             return
         
         recurse(n.left)

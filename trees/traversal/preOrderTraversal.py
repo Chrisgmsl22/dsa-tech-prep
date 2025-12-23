@@ -11,7 +11,7 @@ def preOrderTraversal(root: TreeNode) -> list[int]:
     """
     res = []
 
-    def recurse(node):
+    def recurse(node: TreeNode):
         if node is None:
             return
         res.append(node.val)

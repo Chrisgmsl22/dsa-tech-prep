@@ -1,4 +1,6 @@
-from trees.classes.tree import TreeNode
+
+
+from trees.utils.tree_node import TreeNode
 
 
 class Solution:
