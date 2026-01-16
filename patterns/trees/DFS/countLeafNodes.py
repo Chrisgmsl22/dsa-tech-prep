@@ -1,6 +1,8 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
 
-
-from trees.utils.tree_node import TreeNode
+from utils.tree_node import TreeNode
 
 
 class Solution:
