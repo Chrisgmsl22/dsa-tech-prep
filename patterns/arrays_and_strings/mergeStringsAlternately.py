@@ -43,7 +43,7 @@ class Solution:
         
         return res
 """
-    NOTES:
+    NOTES:  
     - Input: 2 strings, w1 and w2
     - Output: A single string, which contains both words added character by character 
     in alternating order
