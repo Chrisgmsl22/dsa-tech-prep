@@ -51,6 +51,26 @@ class Solution:
                         return True
             return False
         return dfs(source)
+    
+    def validatePathUsingBFS(self, n: int, edges: list[list[int]], source: int, destination: int) -> bool:
+        graph = self._buildGraphMap(edges)
+        visited = set()
+        queue = []
+
+        queue.append(source)
+        visited.add(source)
+
+        while queue:
+            currV = queue.pop(0)
+            if currV == destination:
+                return True
+            
+            for neighbor in graph[currV]:
+                if neighbor not in visited:
+                    queue.append(neighbor)
+                    visited.add(neighbor)
+        
+        return False
 
 
 # Remember, if my recursive function returns a value, then we need to connect it with the rest of the other recursive calls, so we do return dfs() ...
@@ -64,6 +84,6 @@ edges = [[0,1],[1,2],[2,0]]
 source = 0 
 destination = 2
 
-res = sol.validPath(n, edges, source, destination)
+res = sol.validatePathUsingBFS(n, edges, source, destination)
 
 print("Result: ", res)
