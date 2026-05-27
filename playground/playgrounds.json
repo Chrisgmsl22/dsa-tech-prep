@@ -1,0 +1,12 @@
+{
+  "playgrounds": [
+    {
+      "category": "graphs",
+      "slug": "traverse_graph_using_dfs",
+      "title": "Depth-First Traversal",
+      "blurb": "Recursive DFS over an adjacency list — watch the call stack grow and unwind as nodes are visited.",
+      "tags": ["recursion", "adjacency list", "call stack"],
+      "source": "patterns/graphs/traverse_graph_using_dfs.py"
+    }
+  ]
+}

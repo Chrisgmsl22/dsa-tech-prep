@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DSA · Playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="home.css" />
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <header class="hero">
+      <div class="hero__mark">&#9654;_</div>
+      <div>
+        <span class="hero__kicker">interactive code visualizations</span>
+        <h1>DSA Playground</h1>
+        <p class="hero__sub">Step through algorithms and data structures, one frame at a time. Pick a visualization to play it.</p>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="search">
+        <span class="search__icon">&#9906;</span>
+        <input id="search" type="text" placeholder="Search patterns, tags, concepts…" autocomplete="off" />
+      </div>
+      <span class="count" id="count"></span>
+    </div>
+
+    <div id="catalog" class="catalog"></div>
+
+    <footer class="foot">
+      <span>Add a visualization → drop a folder under its category + register it in <code>playgrounds.json</code>.</span>
+      <span>See <code>PLAYGROUND_GUIDE.md</code>.</span>
+    </footer>
+  </main>
+
+  <script src="home.js"></script>
+</body>
+</html>

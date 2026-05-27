@@ -86,6 +86,13 @@ Remember: I'm here to help you **learn to think** like a strong engineer, not to
 
 ---
 
+## Visual Playground
+
+When I ask to "show me a visual example of how `<X>` works" (or to visualize/animate code),
+read `playground/PLAYGROUND_GUIDE.md` and follow it.
+
+---
+
 ## Student Context & Progress
 
 ### Practice Approach
