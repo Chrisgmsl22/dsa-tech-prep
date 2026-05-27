@@ -29,7 +29,21 @@ class Solution:
         
         return res
 
+    def buildGraphMap(self, grid: list[list[int]]) -> dict[int, list[int]]:
+        graph: dict[int, list[int]] = {}
 
+        for vertice in grid:
+            vertex1, vertex2 = vertice
+
+            if vertex1 not in graph: # initialize first
+                graph[vertex1] = []
+            if vertex2 not in graph:
+                graph[vertex2] = []
+            # Now that we finished this, we do the proper mapping for each vertex
+            graph[vertex1].append(vertex2)
+            graph[vertex2].append(vertex1)
+        
+        return graph
 
 
 sol = Solution()
@@ -46,6 +60,6 @@ graph = [[0, 1], [1, 2], [0, 2]]
 
 """
 
-res = sol.convertListIntoAdjacencyList(graph)
+res = sol.buildGraphMap(graph)
 
 print("Result: ", res)
