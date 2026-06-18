@@ -7,6 +7,22 @@
       "blurb": "Recursive DFS over an adjacency list — watch the call stack grow and unwind as nodes are visited.",
       "tags": ["recursion", "adjacency list", "call stack"],
       "source": "patterns/graphs/traverse_graph_using_dfs.py"
+    },
+    {
+      "category": "graphs",
+      "slug": "bfs_traversal",
+      "title": "Breadth-First Traversal",
+      "blurb": "Iterative BFS over an adjacency list — watch the queue fill front-to-back and nodes get visited level by level.",
+      "tags": ["queue", "adjacency list", "level order"],
+      "source": "patterns/graphs/bfs_template_for_graphs.py"
+    },
+    {
+      "category": "grids",
+      "slug": "bfs_on_grids",
+      "title": "BFS on a Grid",
+      "blurb": "Iterative BFS over a 2D grid — watch the queue hold (row, col) coordinates and the frontier expand outward, one ring at a time.",
+      "tags": ["queue", "matrix", "directions array", "level order"],
+      "source": "patterns/grids/bfs_on_grids.py"
     }
   ]
 }

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Graph BFS · Breadth-First Traversal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script>
+    // Dev cache-buster: always load the freshest CSS while iterating (no hard-refresh needed).
+    document.write('<link rel="stylesheet" href="styles.css?v=' + Date.now() + '">');
+  </script>
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <header class="head">
+      <div class="head__title">
+        <a class="head__back" href="../../index.html">&larr; Playground</a>
+        <span class="head__kicker">graphs</span>
+        <h1>Breadth-First Traversal</h1>
+      </div>
+      <div class="head__meta">
+        <span class="dot"></span> iterative · queue
+      </div>
+    </header>
+
+    <section class="controls" role="group" aria-label="Playback controls">
+      <button id="play" class="btn btn--primary">
+        <span class="btn__glyph" id="play-glyph">&#9654;</span>
+        <span id="play-label">Play</span>
+      </button>
+      <button id="step" class="btn">&rsaquo;&rsaquo; Step</button>
+      <button id="reset" class="btn">&#8635; Reset</button>
+
+      <div class="speed">
+        <label for="speed">Speed</label>
+        <input id="speed" type="range" min="0" max="8" step="1" value="4" />
+        <span class="speed__val" id="speed-val">1&times;</span>
+      </div>
+
+      <div class="progress" id="progress">
+        <span id="progress-text">0 / 0</span>
+        <div class="progress__bar"><div class="progress__fill" id="progress-fill"></div></div>
+      </div>
+    </section>
+
+    <section class="stage">
+      <svg id="graph" viewBox="0 0 600 470" preserveAspectRatio="xMidYMid meet" aria-label="Graph visualization"></svg>
+    </section>
+
+    <div class="status" id="status">
+      <span class="status__tag">STATUS</span>
+      <span class="status__msg" id="status-msg">Press Play to start the traversal.</span>
+    </div>
+
+    <section class="panels">
+      <div class="panel">
+        <div class="panel__head">
+          <span class="panel__icon">&#9776;</span> Queue
+          <span class="panel__hint">front = next out</span>
+        </div>
+        <ul class="stacklist queuelist" id="queue"></ul>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head"><span class="panel__icon">&#10003;</span> Visited</div>
+        <div class="chips" id="visited"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head"><span class="panel__icon">&#9656;</span> Output <span class="panel__hint">visit order</span></div>
+        <div class="chips chips--seq" id="output"></div>
+      </div>
+    </section>
+
+    <section class="panel panel--wide">
+      <div class="panel__head"><span class="panel__icon">&#9783;</span> Adjacency List <span class="panel__hint">bidirectional</span></div>
+      <div class="adj" id="adj"></div>
+    </section>
+
+    <details class="source">
+      <summary>Source &mdash; <code>bfs_template_for_graphs.py</code></summary>
+      <pre id="source"></pre>
+    </details>
+
+    <footer class="foot">
+      <kbd>Space</kbd> play/pause &nbsp; <kbd>&rarr;</kbd> step &nbsp; <kbd>R</kbd> reset
+    </footer>
+  </main>
+
+  <script>
+    document.write('<script src="app.js?v=' + Date.now() + '"><\/script>');
+  </script>
+</body>
+</html>

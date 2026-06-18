@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grid BFS · Breadth-First Traversal on a Grid</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script>
+    // Dev cache-buster: always load the freshest CSS while iterating (no hard-refresh needed).
+    document.write('<link rel="stylesheet" href="styles.css?v=' + Date.now() + '">');
+  </script>
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <header class="head">
+      <div class="head__title">
+        <a class="head__back" href="../../index.html">&larr; Playground</a>
+        <span class="head__kicker">grids</span>
+        <h1>BFS on a Grid</h1>
+      </div>
+      <div class="head__meta">
+        <span class="dot"></span> iterative · queue · 4-directional
+      </div>
+    </header>
+
+    <section class="controls" role="group" aria-label="Playback controls">
+      <button id="play" class="btn btn--primary">
+        <span class="btn__glyph" id="play-glyph">&#9654;</span>
+        <span id="play-label">Play</span>
+      </button>
+      <button id="step" class="btn">&rsaquo;&rsaquo; Step</button>
+      <button id="reset" class="btn">&#8635; Reset</button>
+
+      <div class="speed">
+        <label for="speed">Speed</label>
+        <input id="speed" type="range" min="0" max="8" step="1" value="4" />
+        <span class="speed__val" id="speed-val">1&times;</span>
+      </div>
+
+      <div class="progress" id="progress">
+        <span id="progress-text">0 / 0</span>
+        <div class="progress__bar"><div class="progress__fill" id="progress-fill"></div></div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <section class="stage">
+        <svg id="grid" viewBox="0 0 364 364" preserveAspectRatio="xMidYMid meet" aria-label="Grid visualization"></svg>
+      </section>
+
+      <div class="panel panel--dirs">
+        <div class="panel__head"><span class="panel__icon">&#10021;</span> Directions <span class="panel__hint">probe order</span></div>
+        <div class="dirs" id="dirs"></div>
+        <div class="legend">
+          <span><i class="sw sw--active"></i> processing</span>
+          <span><i class="sw sw--queued"></i> in queue</span>
+          <span><i class="sw sw--visited"></i> visited</span>
+          <span><i class="sw sw--probe"></i> probing</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="status" id="status">
+      <span class="status__tag">STATUS</span>
+      <span class="status__msg" id="status-msg">Press Play to start the traversal.</span>
+    </div>
+
+    <section class="panels">
+      <div class="panel">
+        <div class="panel__head">
+          <span class="panel__icon">&#9776;</span> Queue
+          <span class="panel__hint">front = next out</span>
+        </div>
+        <ul class="stacklist queuelist" id="queue"></ul>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head"><span class="panel__icon">&#10003;</span> Visited <span class="panel__hint">coords</span></div>
+        <div class="chips" id="visited"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head"><span class="panel__icon">&#9656;</span> Output <span class="panel__hint">cell values, in order</span></div>
+        <div class="chips chips--seq" id="output"></div>
+      </div>
+    </section>
+
+    <details class="source">
+      <summary>Source &mdash; <code>bfs_on_grids.py</code></summary>
+      <pre id="source"></pre>
+    </details>
+
+    <footer class="foot">
+      <kbd>Space</kbd> play/pause &nbsp; <kbd>&rarr;</kbd> step &nbsp; <kbd>R</kbd> reset
+    </footer>
+  </main>
+
+  <script>
+    document.write('<script src="app.js?v=' + Date.now() + '"><\/script>');
+  </script>
+</body>
+</html>
