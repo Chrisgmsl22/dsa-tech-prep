@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DSA · Spaced Repetition Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <header class="hero">
+      <div class="hero__row">
+        <div class="hero__mark">&#9851;</div>
+        <div>
+          <span class="hero__kicker">active recall &middot; spaced repetition</span>
+          <h1>Prep Tracker</h1>
+          <p class="hero__sub">Solve blind, grade honestly, let the buckets decide when you see each problem again. AlgoMap roadmap &mdash; 100 problems.</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Stat strip -->
+    <section class="stats" id="stats"></section>
+
+    <!-- View tabs -->
+    <nav class="tabs" id="tabs">
+      <button class="tab is-active" data-view="due">Due today <span class="tab__badge" id="dueBadge">0</span></button>
+      <button class="tab" data-view="new">New</button>
+      <button class="tab" data-view="all">All</button>
+      <button class="tab" data-view="help">How it works</button>
+    </nav>
+
+    <!-- Category filter -->
+    <div class="filter" id="filter"></div>
+
+    <!-- Main list -->
+    <div id="list" class="list"></div>
+
+    <footer class="foot">
+      <div class="foot__actions">
+        <button id="exportBtn" class="ghost">Export progress</button>
+        <button id="resetBtn" class="ghost danger">Reset all</button>
+      </div>
+      <span class="foot__note">Progress saves to this browser (localStorage). Export before clearing site data.</span>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

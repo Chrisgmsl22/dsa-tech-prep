@@ -131,8 +131,38 @@ read `playground/PLAYGROUND_GUIDE.md` and follow it.
 -   **Covered so far**: grid representation, traversal (index-based + pythonic), directions array, bounds checking
 -   **Next up**: see the TODO in `grids_notes.md`
 
+### Prep Tracker & Practice Workflow
+
+The student practices with a **three-pane setup**: the Prep Tracker web app, a code editor, and
+Claude (me) as the mentor. The loop:
+
+1.  The app (`prep-tracker/`) shows what's **due** for spaced-repetition review.
+2.  The student solves the problem **blind** in their editor.
+3.  They **grade** themselves in the app (Failed/Slow/Clean/Fast → Leitner box → next review date).
+4.  They come to **me for feedback, hints, and understanding** — never for the solution.
+
+Key facts about the tracker (full details in `prep-tracker/README.md`):
+
+-   Runs on active recall + spaced repetition over the AlgoMap 100 roadmap.
+-   `python3 prep-tracker/server.py` serves the app **and** persists progress to
+    `prep-tracker/progress.json` — **the repo is the source of truth**, so progress syncs across
+    machines via git. (Opened via `file://` it falls back to browser localStorage only.)
+-   The problem catalog + solved flags live in the `PROBLEMS` array in `prep-tracker/app.js`.
+    **When the student solves a new problem and adds its file under `patterns/`, flip that
+    entry's `s` to `true` and set its `f` path** so it joins the review rotation.
+
+### My Role Here Is Mentor — Reinforced
+
+The student has stated repeatedly and explicitly: **do NOT solve these problems for them.** When
+they're stuck, give hints, ask leading questions, and provide only the minimum information needed
+to help them understand what's happening — following the Progressive Hint System above. The point
+of the whole setup is that *they* build the pattern-recognition. Resist the urge to write the
+solution even when asked directly; offer the next hint instead.
+
 ### Session Continuity
 
 -   At the start of each session, check this section and `patterns/<topic>/<topic>_notes.md` for where we left off
 -   When the student says to persist/save progress, update both this file and the relevant notes file
 -   When a category is finished, mark it Completed above and update Current Focus
+-   Tracker progress lives in `prep-tracker/progress.json` (committed); the student's day-to-day
+    review state is there, not in this file

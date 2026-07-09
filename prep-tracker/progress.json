@@ -1,0 +1,401 @@
+{
+  "arrays_and_strings#1": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-08",
+    "last": null,
+    "trigger": ""
+  },
+  "arrays_and_strings#10": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-10",
+    "last": null,
+    "trigger": ""
+  },
+  "arrays_and_strings#2": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-08",
+    "last": null,
+    "trigger": ""
+  },
+  "arrays_and_strings#3": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-08",
+    "last": null,
+    "trigger": ""
+  },
+  "arrays_and_strings#4": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-09",
+    "last": null,
+    "trigger": ""
+  },
+  "arrays_and_strings#6": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-09",
+    "last": null,
+    "trigger": ""
+  },
+  "arrays_and_strings#8": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-09",
+    "last": null,
+    "trigger": ""
+  },
+  "backtracking#1": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-22",
+    "last": null,
+    "trigger": ""
+  },
+  "backtracking#2": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-22",
+    "last": null,
+    "trigger": ""
+  },
+  "backtracking#3": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-23",
+    "last": null,
+    "trigger": ""
+  },
+  "backtracking#4": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-23",
+    "last": null,
+    "trigger": ""
+  },
+  "backtracking#5": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-23",
+    "last": null,
+    "trigger": ""
+  },
+  "binary_search#1": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-17",
+    "last": null,
+    "trigger": ""
+  },
+  "binary_search#2": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-17",
+    "last": null,
+    "trigger": ""
+  },
+  "binary_search#3": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-18",
+    "last": null,
+    "trigger": ""
+  },
+  "binary_search#8": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-18",
+    "last": null,
+    "trigger": ""
+  },
+  "dp#1": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-25",
+    "last": null,
+    "trigger": ""
+  },
+  "dp#2": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-25",
+    "last": null,
+    "trigger": ""
+  },
+  "dp#3": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-26",
+    "last": null,
+    "trigger": ""
+  },
+  "dp#4": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-26",
+    "last": null,
+    "trigger": ""
+  },
+  "dp#8": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-26",
+    "last": null,
+    "trigger": ""
+  },
+  "graphs#1": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-24",
+    "last": null,
+    "trigger": ""
+  },
+  "graphs#2": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-24",
+    "last": null,
+    "trigger": ""
+  },
+  "graphs#3": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-24",
+    "last": null,
+    "trigger": ""
+  },
+  "graphs#4": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-25",
+    "last": null,
+    "trigger": ""
+  },
+  "hashmaps_and_sets#1": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-10",
+    "last": null,
+    "trigger": ""
+  },
+  "hashmaps_and_sets#2": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-10",
+    "last": null,
+    "trigger": ""
+  },
+  "hashmaps_and_sets#3": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-11",
+    "last": null,
+    "trigger": ""
+  },
+  "hashmaps_and_sets#4": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-11",
+    "last": null,
+    "trigger": ""
+  },
+  "heaps#1": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-21",
+    "last": null,
+    "trigger": ""
+  },
+  "heaps#2": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-21",
+    "last": null,
+    "trigger": ""
+  },
+  "heaps#3": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-21",
+    "last": null,
+    "trigger": ""
+  },
+  "heaps#4": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-22",
+    "last": null,
+    "trigger": ""
+  },
+  "linked_lists#1": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-16",
+    "last": null,
+    "trigger": ""
+  },
+  "linked_lists#2": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-16",
+    "last": null,
+    "trigger": ""
+  },
+  "linked_lists#3": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-16",
+    "last": null,
+    "trigger": ""
+  },
+  "linked_lists#4": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-17",
+    "last": null,
+    "trigger": ""
+  },
+  "sliding_window#1": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-13",
+    "last": null,
+    "trigger": ""
+  },
+  "sliding_window#2": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-13",
+    "last": null,
+    "trigger": ""
+  },
+  "sliding_window#3": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-13",
+    "last": null,
+    "trigger": ""
+  },
+  "sliding_window#4": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-14",
+    "last": null,
+    "trigger": ""
+  },
+  "sliding_window#5": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-14",
+    "last": null,
+    "trigger": ""
+  },
+  "stacks#1": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-14",
+    "last": null,
+    "trigger": ""
+  },
+  "stacks#2": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-15",
+    "last": null,
+    "trigger": ""
+  },
+  "stacks#3": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-15",
+    "last": null,
+    "trigger": ""
+  },
+  "stacks#4": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-15",
+    "last": null,
+    "trigger": ""
+  },
+  "trees#1": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-18",
+    "last": null,
+    "trigger": ""
+  },
+  "trees#2": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-19",
+    "last": null,
+    "trigger": ""
+  },
+  "trees#3": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-19",
+    "last": null,
+    "trigger": ""
+  },
+  "trees#4": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-19",
+    "last": null,
+    "trigger": ""
+  },
+  "trees#6": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-20",
+    "last": null,
+    "trigger": ""
+  },
+  "trees#7": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-20",
+    "last": null,
+    "trigger": ""
+  },
+  "trees#9": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-20",
+    "last": null,
+    "trigger": ""
+  },
+  "two_pointers#1": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-11",
+    "last": null,
+    "trigger": ""
+  },
+  "two_pointers#2": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-12",
+    "last": null,
+    "trigger": ""
+  },
+  "two_pointers#3": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-12",
+    "last": null,
+    "trigger": ""
+  },
+  "two_pointers#4": {
+    "attempts": 0,
+    "box": 2,
+    "due": "2026-07-12",
+    "last": null,
+    "trigger": ""
+  }
+}
