@@ -1,9 +1,9 @@
 {
   "arrays_and_strings#1": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-08",
-    "last": null,
+    "attempts": 1,
+    "box": 3,
+    "due": "2026-07-23",
+    "last": "2026-07-16",
     "trigger": ""
   },
   "arrays_and_strings#10": {
@@ -14,11 +14,11 @@
     "trigger": ""
   },
   "arrays_and_strings#2": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-08",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 3,
+    "due": "2026-07-23",
+    "last": "2026-07-16",
+    "trigger": "2 strings, traversal through both, different sizes?, need the biggest one + guards to prevent overflow"
   },
   "arrays_and_strings#3": {
     "attempts": 0,

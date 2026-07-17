@@ -151,6 +151,13 @@ Key facts about the tracker (full details in `prep-tracker/README.md`):
     **When the student solves a new problem and adds its file under `patterns/`, flip that
     entry's `s` to `true` and set its `f` path** so it joins the review rotation.
 
+**File conventions (see `reviews/README.md`):**
+
+-   **New problem** → canonical solution + `NOTES:` block go in `patterns/<category>/<problem>.py`.
+-   **Review rep** (blind re-solve of an already-solved problem) → a NEW dated file at
+    `reviews/<category>/<problem_slug>/YYYY-MM-DD_<grade>.py`. Never overwrite past attempts —
+    the dated history is the point. Always solve cold, then validate on LeetCode.
+
 ### My Role Here Is Mentor — Reinforced
 
 The student has stated repeatedly and explicitly: **do NOT solve these problems for them.** When
