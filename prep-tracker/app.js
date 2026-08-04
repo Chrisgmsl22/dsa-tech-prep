@@ -17,12 +17,9 @@
  * `f`        => repo path of that file, shown in the UI.
  * ========================================================================== */
 
-const CORE = new Set([
-  "arrays_and_strings",
-  "hashmaps_and_sets",
-  "two_pointers",
-  "sliding_window",
-]);
+/* Tier 1 doubles as the "core" set used for stat counts, chip highlighting,
+ * and group ordering. TIERS comes from selection.js, loaded before this file. */
+const CORE = new Set(TIERS[1]);
 
 const CAT_META = {
   arrays_and_strings: { label: "Arrays & Strings", glyph: "[ ]" },
@@ -295,6 +292,7 @@ let STATE = {};
 let VIEW = "due";
 let CAT_FILTER = "all";
 let OPEN_ID = null;
+let SHOW_ALL = false; // session-only Due-view override; not persisted
 
 /* ---------- derived helpers ---------- */
 function prog(p) {
@@ -364,6 +362,10 @@ function visibleProblems() {
   return items;
 }
 
+function windowNoteHTML(shown, total) {
+  return ""; // replaced in Task 5
+}
+
 function renderList() {
   if (VIEW === "help") {
     listEl.innerHTML = HELP_HTML;
@@ -378,15 +380,26 @@ function renderList() {
   }
 
   if (VIEW === "due") {
-    // Flat list, weakest box first, then core, then most overdue.
-    items.sort((a, b) => {
-      const pa = prog(a), pb = prog(b);
-      if (pa.box !== pb.box) return pa.box - pb.box;
-      const ca = CORE.has(a.cat) ? 0 : 1, cb = CORE.has(b.cat) ? 0 : 1;
-      if (ca !== cb) return ca - cb;
-      return daysUntil(pa.due) - daysUntil(pb.due);
+    // Project each problem into the plain shape selection.js expects, keeping
+    // a back-reference so we can render the original record afterwards.
+    const candidates = items.map((p) => {
+      const st = prog(p);
+      return { key: id(p), cat: p.cat, box: st.box, daysUntil: daysUntil(st.due), problem: p };
     });
-    listEl.innerHTML = items.map(rowHTML).join("");
+
+    let picked;
+    if (SHOW_ALL) {
+      picked = candidates.slice().sort(comparePriority);
+    } else if (CAT_FILTER === "all") {
+      picked = selectWindow(candidates, WINDOW_SIZE);
+    } else {
+      // Tier quotas are meaningless inside a single category — just cap.
+      picked = candidates.slice().sort(comparePriority).slice(0, WINDOW_SIZE);
+    }
+
+    listEl.innerHTML =
+      windowNoteHTML(picked.length, candidates.length) +
+      picked.map((x) => rowHTML(x.problem)).join("");
     return;
   }
 
