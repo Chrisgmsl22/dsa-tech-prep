@@ -362,8 +362,23 @@ function visibleProblems() {
   return items;
 }
 
+/* Header strip above the Due list. Shows how much of the real backlog is
+ * hidden, plus today's grading count — derived from the `last` field that
+ * gradeProblem() already writes, so this adds no persisted state. */
 function windowNoteHTML(shown, total) {
-  return ""; // replaced in Task 5
+  const gradedToday = Object.values(STATE).filter((s) => s.last === todayISO()).length;
+  const hidden = total - shown;
+  let toggle = "";
+  if (SHOW_ALL) {
+    toggle = `<button class="ghost" id="windowToggle">Show window</button>`;
+  } else if (hidden > 0) {
+    toggle = `<button class="ghost" id="windowToggle">Show all ${total}</button>`;
+  }
+  return (
+    `<div class="window-note">` +
+    `<span>Showing <strong>${shown}</strong> of ${total} due · ` +
+    `<strong>${gradedToday}</strong> graded today</span>${toggle}</div>`
+  );
 }
 
 function renderList() {
@@ -546,6 +561,12 @@ filterEl.addEventListener("click", (e) => {
 });
 
 listEl.addEventListener("click", (e) => {
+  // window size toggle?
+  if (e.target.id === "windowToggle") {
+    SHOW_ALL = !SHOW_ALL;
+    render();
+    return;
+  }
   // grade button?
   const g = e.target.closest(".grade");
   if (g) {

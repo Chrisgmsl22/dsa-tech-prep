@@ -223,3 +223,17 @@ html, body {
 .foot__note { color: var(--muted); font-size: 11px; }
 
 .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+
+.window-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+.window-note strong { color: var(--text); }
