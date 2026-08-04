@@ -158,6 +158,46 @@ Key facts about the tracker (full details in `prep-tracker/README.md`):
     `reviews/<category>/<problem_slug>/YYYY-MM-DD_<grade>.py`. Never overwrite past attempts —
     the dated history is the point. Always solve cold, then validate on LeetCode.
 
+**Daily window:** the Due list is capped at 5 problems (`WINDOW_SIZE` in
+`prep-tracker/selection.js`), filled from three interview-frequency tiers — tier 1
+(arrays/strings, hashmaps/sets, two pointers, sliding window, stacks), tier 2 (trees,
+binary search, linked lists, graphs), tier 3 (heaps, backtracking, DP) — at roughly
+50/35/15, so a 5-wide window lands at 2/2/1. Anything in box 1 or more than 30 days
+overdue jumps the window regardless of tier. The window auto-refills as problems are
+graded; `Show all` reveals the true backlog. It is a display filter only and never
+rewrites due dates.
+
+**Time-box protocol (the grade buttons are anchored to these numbers):**
+
+Two kinds of stuck, and only one is worth paying for. Being stuck on the
+*approach* (pattern unknown) has near-zero return from grinding — an unknown
+pattern cannot be derived from first principles. Being stuck on the
+*implementation* (approach right, code wrong) is the productive struggle.
+
+*New problem — 60 minute hard cap:*
+
+-   **0–20 min** — blind, no hints. Brainstorm in a `NOTES:` comment block first.
+-   **@20 min, no approach** → take the *pattern name only* — not code, not
+    pseudocode. Then reset the clock.
+-   **20–50 min** — implement. Bugs here are the good struggle; stay with them.
+-   **@50–60 min, still broken** → read the solution, understand it, **close it**,
+    re-implement from memory. Grade **Failed** → box 1 → it returns tomorrow.
+-   **Never a second day on a first attempt.**
+
+*Review rep — 15 minutes:* can't get it in 15? The memory is genuinely gone.
+Grade **Failed**, skim the existing file in `patterns/`, move on. Reviews are
+never ground out — that is what the 1-day box-1 interval is for.
+
+**The principle:** tomorrow's second attempt is worth more than today's third
+hour. Retrieval after forgetting builds durable memory; re-reading your own
+stuck code builds almost nothing.
+
+**As mentor, hold this line.** When the student is past ~20 minutes with no
+approach, give the pattern name — that is the correct hint at that moment, not
+a failure of the Progressive Hint System. When they are past ~50 minutes on a
+first attempt, tell them to read the solution and grade Failed rather than
+letting a problem consume multiple days.
+
 ### My Role Here Is Mentor — Reinforced
 
 The student has stated repeatedly and explicitly: **do NOT solve these problems for them.** When

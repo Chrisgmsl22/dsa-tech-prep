@@ -172,11 +172,13 @@ const PROBLEMS = [
 
 // Leitner intervals (days) keyed by box.
 const INTERVAL = { 1: 1, 2: 3, 3: 7, 4: 21 };
+// Sub-labels are anchored to the time-box protocol in CLAUDE.md so that
+// self-grading is a measurement rather than a mood.
 const GRADES = [
-  { box: 1, cls: "g1", label: "Failed",  sub: "needed the solution · +1d" },
-  { box: 2, cls: "g2", label: "Slow",    sub: "solved with hints · +3d" },
-  { box: 3, cls: "g3", label: "Clean",   sub: "solved, some hesitation · +7d" },
-  { box: 4, cls: "g4", label: "Fast",    sub: "instant & confident · +21d" },
+  { box: 1, cls: "g1", label: "Failed",  sub: "hit the cap / read the solution · +1d" },
+  { box: 2, cls: "g2", label: "Slow",    sub: "needed a hint, or >40 min · +3d" },
+  { box: 3, cls: "g3", label: "Clean",   sub: "solved unaided, under ~30 min · +7d" },
+  { box: 4, cls: "g4", label: "Fast",    sub: "under ~15 min, no stumbles · +21d" },
 ];
 const NEW_PER_DAY_SEED = 3; // stagger solved problems so ~3 come due per day
 
