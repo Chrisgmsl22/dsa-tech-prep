@@ -74,9 +74,47 @@ function comparePriority(a, b) {
   return a.daysUntil - b.daysUntil;
 }
 
+/* Pick the problems to show today.
+ *
+ *   1. Urgent problems (failed, or badly rotted) fill the window first,
+ *      ignoring tiers entirely. If they fill it, we are done.
+ *   2. Remaining slots are split across tiers by TIER_SHARE.
+ *   3. A tier with fewer due problems than its quota gives its slots away —
+ *      the backfill pass hands them to whoever is next by priority.
+ *
+ * Returns the input objects by identity, never copies, so callers can map
+ * straight back to their own records. Does not mutate `candidates`. */
+function selectWindow(candidates, windowSize) {
+  const byPriority = (arr) => arr.slice().sort(comparePriority);
+
+  const urgent = candidates.filter(isUrgent);
+  const rest = candidates.filter((x) => !isUrgent(x));
+
+  const picked = byPriority(urgent).slice(0, windowSize);
+  const slotsLeft = windowSize - picked.length;
+  if (slotsLeft <= 0) return byPriority(picked);
+
+  const quotas = largestRemainder(TIER_SHARE, slotsLeft);
+  const taken = new Set();
+  for (const tier of [1, 2, 3]) {
+    const pool = byPriority(rest.filter((x) => tierOf(x.cat) === tier));
+    for (const candidate of pool.slice(0, quotas[tier])) {
+      picked.push(candidate);
+      taken.add(candidate);
+    }
+  }
+
+  if (picked.length < windowSize) {
+    const leftovers = byPriority(rest.filter((x) => !taken.has(x)));
+    picked.push(...leftovers.slice(0, windowSize - picked.length));
+  }
+
+  return byPriority(picked);
+}
+
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     TIERS, TIER_SHARE, WINDOW_SIZE,
-    largestRemainder, tierOf, isUrgent, comparePriority,
+    largestRemainder, tierOf, isUrgent, comparePriority, selectWindow,
   };
 }
