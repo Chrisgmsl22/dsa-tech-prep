@@ -7,10 +7,10 @@
     "trigger": ""
   },
   "arrays_and_strings#10": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-10",
-    "last": null,
+    "attempts": 1,
+    "box": 1,
+    "due": "2026-08-04",
+    "last": "2026-08-03",
     "trigger": ""
   },
   "arrays_and_strings#2": {
@@ -21,31 +21,31 @@
     "trigger": "2 strings, traversal through both, different sizes?, need the biggest one + guards to prevent overflow"
   },
   "arrays_and_strings#3": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-08",
-    "last": null,
+    "attempts": 1,
+    "box": 3,
+    "due": "2026-07-29",
+    "last": "2026-07-22",
     "trigger": ""
   },
   "arrays_and_strings#4": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-09",
-    "last": null,
+    "attempts": 1,
+    "box": 3,
+    "due": "2026-07-29",
+    "last": "2026-07-22",
     "trigger": ""
   },
   "arrays_and_strings#6": {
-    "attempts": 0,
+    "attempts": 2,
     "box": 2,
-    "due": "2026-07-09",
-    "last": null,
+    "due": "2026-07-30",
+    "last": "2026-07-27",
     "trigger": ""
   },
   "arrays_and_strings#8": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-09",
-    "last": null,
+    "attempts": 3,
+    "box": 1,
+    "due": "2026-08-04",
+    "last": "2026-08-03",
     "trigger": ""
   },
   "backtracking#1": {
