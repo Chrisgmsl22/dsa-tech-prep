@@ -45,6 +45,38 @@ function largestRemainder(shares, total) {
   return quotas;
 }
 
+// Flattened reverse index, built once: category slug -> tier number.
+const TIER_OF_CAT = {};
+for (const tier of Object.keys(TIERS)) {
+  for (const cat of TIERS[tier]) TIER_OF_CAT[cat] = Number(tier);
+}
+
+/* Unknown categories fall back to tier 3 so a newly-added category can never
+ * crowd out the interview-critical tiers before someone classifies it. */
+function tierOf(cat) {
+  return TIER_OF_CAT[cat] || 3;
+}
+
+/* Urgent problems bypass tier quotas entirely. A quota cannot express urgency:
+ * a tier-3 problem failed 40 days ago matters more than a tier-1 problem
+ * solved cleanly last week. Without this, quotas would bury rot forever. */
+function isUrgent(candidate) {
+  return candidate.box === 1 || candidate.daysUntil <= -30;
+}
+
+/* Sort comparator: weakest box, then most interview-critical tier, then most
+ * overdue. `daysUntil` is negative when overdue, so ascending puts the
+ * longest-overdue problem first. */
+function comparePriority(a, b) {
+  if (a.box !== b.box) return a.box - b.box;
+  const ta = tierOf(a.cat), tb = tierOf(b.cat);
+  if (ta !== tb) return ta - tb;
+  return a.daysUntil - b.daysUntil;
+}
+
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { TIERS, TIER_SHARE, WINDOW_SIZE, largestRemainder };
+  module.exports = {
+    TIERS, TIER_SHARE, WINDOW_SIZE,
+    largestRemainder, tierOf, isUrgent, comparePriority,
+  };
 }

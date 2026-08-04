@@ -32,3 +32,46 @@ test("largestRemainder quotas always sum to the total", () => {
     assert.strictEqual(q[1] + q[2] + q[3], n, `failed at n=${n}`);
   }
 });
+
+const c = (cat, box, daysUntil, key = `${cat}#${box}#${daysUntil}`) =>
+  ({ key, cat, box, daysUntil });
+
+test("tierOf maps categories to their tier", () => {
+  assert.strictEqual(S.tierOf("stacks"), 1);
+  assert.strictEqual(S.tierOf("sliding_window"), 1);
+  assert.strictEqual(S.tierOf("trees"), 2);
+  assert.strictEqual(S.tierOf("graphs"), 2);
+  assert.strictEqual(S.tierOf("dp"), 3);
+});
+
+test("tierOf falls back to tier 3 for unknown categories", () => {
+  assert.strictEqual(S.tierOf("grids"), 3);
+});
+
+test("isUrgent flags failed problems regardless of due date", () => {
+  assert.strictEqual(S.isUrgent(c("dp", 1, 0)), true);
+  assert.strictEqual(S.isUrgent(c("dp", 2, 0)), false);
+});
+
+test("isUrgent flags anything more than 30 days overdue", () => {
+  assert.strictEqual(S.isUrgent(c("dp", 4, -31)), true);
+  assert.strictEqual(S.isUrgent(c("dp", 4, -30)), true);
+  assert.strictEqual(S.isUrgent(c("dp", 4, -29)), false);
+});
+
+test("comparePriority orders weakest box first", () => {
+  const sorted = [c("dp", 3, -1), c("dp", 1, -1), c("dp", 2, -1)].sort(S.comparePriority);
+  assert.deepStrictEqual(sorted.map((x) => x.box), [1, 2, 3]);
+});
+
+test("comparePriority breaks box ties by tier, then by most overdue", () => {
+  const sorted = [
+    c("dp", 2, -5, "tier3"),
+    c("trees", 2, -5, "tier2"),
+    c("stacks", 2, -1, "tier1-recent"),
+    c("stacks", 2, -9, "tier1-stale"),
+  ].sort(S.comparePriority);
+  assert.deepStrictEqual(sorted.map((x) => x.key), [
+    "tier1-stale", "tier1-recent", "tier2", "tier3",
+  ]);
+});
