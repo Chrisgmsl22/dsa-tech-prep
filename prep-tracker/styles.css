@@ -264,3 +264,6 @@ html, body {
 .close-panel:hover { border-color: var(--active); color: var(--text); }
 
 .grade.is-chosen { border-color: var(--active); background: #16202a; }
+
+.foot__note.is-warn { color: var(--stack); }
+.foot__note.is-error { color: var(--danger); }

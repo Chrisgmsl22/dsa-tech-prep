@@ -246,20 +246,49 @@ async function loadProgress() {
   return loadLocal();
 }
 
-function saveState() {
+function postState() {
+  saveTimer = null;
+  return fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(STATE),
+  })
+    .then((r) => {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      setFootNote(true);
+    })
+    // Previously `.catch(() => {})` — a dead server meant every grade looked
+    // saved and silently wasn't. You'd only find out at `git status`, or never.
+    .catch(() => setFootNote(false));
+}
+
+/* `immediate` skips the debounce. Only textarea typing needs debouncing;
+ * grading and reset are single discrete events, and debouncing them means a
+ * reload within 400ms loses the write — after which the next server-mode load
+ * overwrites localStorage with the stale file and the grade is gone for good. */
+function saveState(opts) {
   // Always mirror locally so an offline reload still has the latest.
   try { localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); } catch (_) {}
   if (!SERVER_MODE) return;
-  // Debounce writes to the repo file (textarea typing fires often).
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    fetch(API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(STATE),
-    }).catch(() => {});
-  }, 400);
+  if (opts && opts.immediate) {
+    postState();
+    return;
+  }
+  saveTimer = setTimeout(postState, 400);
 }
+
+/* A pending debounced write would be lost on reload/close. Flush it with
+ * sendBeacon, which survives teardown where fetch does not. */
+window.addEventListener("beforeunload", () => {
+  if (!SERVER_MODE || !saveTimer) return;
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  navigator.sendBeacon(
+    API,
+    new Blob([JSON.stringify(STATE)], { type: "application/json" })
+  );
+});
 
 /* Seed any solved problem that has no progress yet: put it in box 2 with a
  * staggered due date so the initial review load is ~NEW_PER_DAY_SEED per day.
@@ -276,17 +305,22 @@ function seedIfNeeded() {
   const today = todayISO();
   let seeded = false;
   solved.forEach((p, i) => {
-    if (STATE[id(p)]) return;
+    // Guard on box, NOT on presence. Typing a trigger note creates a box-0
+    // entry (see the "input" handler), so a presence check would permanently
+    // exclude any problem you'd jotted a note on before solving it — it would
+    // never get a due date and never enter the rotation.
+    const existing = STATE[id(p)];
+    if (existing && existing.box > 0) return;
     STATE[id(p)] = {
       box: 2,
       due: addDays(today, Math.floor(i / NEW_PER_DAY_SEED)),
       last: null,
       attempts: 0,
-      trigger: "",
+      trigger: (existing && existing.trigger) || "", // keep any note already written
     };
     seeded = true;
   });
-  if (seeded) saveState();
+  if (seeded) saveState({ immediate: true });
 }
 
 /* ---------- app state ---------- */
@@ -686,7 +720,7 @@ function gradeProblem(pid, box) {
     attempts: cur.attempts + 1,
     trigger: cur.trigger || "",
   };
-  saveState();
+  saveState({ immediate: true }); // a grade is one discrete event — never debounce it
   // Stay open. The row relocates to "Done today" and keeps the note prompt on
   // screen; FOCUS_TRIGGER makes render() put the cursor in it.
   OPEN_ID = pid;
@@ -697,6 +731,8 @@ function gradeProblem(pid, box) {
 document.getElementById("resetBtn").addEventListener("click", () => {
   if (!confirm("Reset ALL progress? This clears every box, due date, and trigger note.")) return;
   STATE = {};
+  // Debounced on purpose: seedIfNeeded() below saves immediately, and its
+  // clearTimeout cancels this empty write so only the seeded state is posted.
   saveState();
   seedIfNeeded();
   OPEN_ID = null;
@@ -713,16 +749,32 @@ document.getElementById("exportBtn").addEventListener("click", () => {
   URL.revokeObjectURL(url);
 });
 
+/* Footer status. `ok: false` means a POST to the repo file failed, which is
+ * worth shouting about — it's the difference between "saved" and "only in this
+ * browser". */
+function setFootNote(ok) {
+  const note = document.querySelector(".foot__note");
+  if (!note) return;
+  if (!SERVER_MODE) {
+    note.className = "foot__note is-warn";
+    note.textContent =
+      "⚠ Offline mode (localStorage only). Run server.py to make the repo the source of truth.";
+  } else if (ok) {
+    note.className = "foot__note";
+    note.textContent =
+      "✓ Saving to prep-tracker/progress.json — commit it to sync across machines.";
+  } else {
+    note.className = "foot__note is-error";
+    note.textContent =
+      "⚠ Save to progress.json FAILED — changes are in this browser only. Is server.py still running?";
+  }
+}
+
 /* ---------- go ---------- */
 async function init() {
   STATE = await loadProgress();
   seedIfNeeded();
   render();
-  const note = document.querySelector(".foot__note");
-  if (note) {
-    note.textContent = SERVER_MODE
-      ? "✓ Saving to prep-tracker/progress.json — commit it to sync across machines."
-      : "⚠ Offline mode (localStorage only). Run server.py to make the repo the source of truth.";
-  }
+  setFootNote(true);
 }
 init();

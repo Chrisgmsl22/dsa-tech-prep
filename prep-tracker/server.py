@@ -17,10 +17,19 @@ Endpoints:
 
 import json
 import os
+import tempfile
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PROGRESS = os.path.join(HERE, "progress.json")
+
+# PREP_PROGRESS points the server at a different progress file, so you can run
+# the app against fixture data without touching your real history:
+#
+#     PREP_PROGRESS=/tmp/fixture.json PORT=8137 python3 prep-tracker/server.py
+#
+# Use a different PORT too — localStorage is per-origin, so :8137 also gets its
+# own mirror and the sandbox is fully isolated.
+PROGRESS = os.environ.get("PREP_PROGRESS") or os.path.join(HERE, "progress.json")
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -57,10 +66,27 @@ class Handler(SimpleHTTPRequestHandler):
         except json.JSONDecodeError:
             self.send_error(400, "Invalid JSON")
             return
+        # Reject non-objects. `json.loads(b"5")` succeeds, and writing a scalar
+        # here would make the next load fall back to {} and reseed from
+        # scratch -- silently destroying all history.
+        if not isinstance(parsed, dict):
+            self.send_error(400, "Progress must be a JSON object")
+            return
+        # Write to a temp file in the same directory, then atomically rename.
+        # Opening PROGRESS with "w" truncates it first, so an interrupt mid-dump
+        # would leave the source of truth truncated. os.replace is atomic on
+        # POSIX, so the file is either the old version or the new one.
         # Pretty-print + stable key order so git diffs stay readable.
-        with open(PROGRESS, "w") as f:
-            json.dump(parsed, f, indent=2, sort_keys=True)
-            f.write("\n")
+        fd, tmp = tempfile.mkstemp(dir=os.path.dirname(PROGRESS) or ".", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w") as f:
+                json.dump(parsed, f, indent=2, sort_keys=True)
+                f.write("\n")
+            os.replace(tmp, PROGRESS)
+        except Exception:
+            if os.path.exists(tmp):
+                os.unlink(tmp)
+            raise
         self.send_response(204)
         self.end_headers()
 

@@ -35,6 +35,26 @@ open prep-tracker/index.html          # macOS
 Opened this way (no server), progress saves only to the browser's `localStorage` and is **not**
 written to the repo. The footer tells you which mode you're in (✓ repo file vs ⚠ offline).
 
+**Running against test data** — point `PREP_PROGRESS` at a throwaway file to poke at the app
+without touching your real history:
+
+```bash
+echo '{}' > /tmp/fixture.json
+PREP_PROGRESS=/tmp/fixture.json PORT=8137 python3 prep-tracker/server.py
+```
+
+Use a different port as well as a different file. `localStorage` is scoped per origin, so
+`localhost:8137` gets its own mirror too and the sandbox is fully isolated from `localhost:8000`.
+An empty `{}` fixture will seed itself from the catalog on first load, exactly like a fresh start.
+
+### Running the tests
+
+```bash
+node --test prep-tracker/selection.test.js
+```
+
+No install step — this uses Node's built-in test runner.
+
 ---
 
 ## 2. The daily loop (how to use it)
