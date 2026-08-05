@@ -295,6 +295,7 @@ let VIEW = "due";
 let CAT_FILTER = "all";
 let OPEN_ID = null;
 let SHOW_ALL = false; // session-only Due-view override; not persisted
+let FOCUS_TRIGGER = false; // one-shot: focus the note field after the next render
 
 /* ---------- derived helpers ---------- */
 function prog(p) {
@@ -303,6 +304,13 @@ function prog(p) {
 function isDue(p) {
   const st = prog(p);
   return st.box >= 1 && st.due && daysUntil(st.due) <= 0;
+}
+/* Graded today. These leave the due list the moment they're graded (their due
+ * date jumps forward), so without a section of their own they'd just vanish —
+ * taking the trigger prompt with them. */
+function isDoneToday(p) {
+  const st = prog(p);
+  return st.box >= 1 && st.last === todayISO();
 }
 
 /* ---------- rendering ---------- */
@@ -318,6 +326,18 @@ function render() {
   document.querySelectorAll(".tab").forEach((t) =>
     t.classList.toggle("is-active", t.dataset.view === VIEW)
   );
+
+  // The graded row moves down into "Done today", so follow it and land the
+  // cursor in the note field — otherwise you'd have to hunt for where it went.
+  if (FOCUS_TRIGGER) {
+    FOCUS_TRIGGER = false;
+    const ta = listEl.querySelector(".row.is-open textarea[data-trigger]");
+    if (ta) {
+      ta.closest(".row").scrollIntoView({ behavior: "smooth", block: "center" });
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+    }
+  }
 }
 
 function renderStats() {
@@ -391,11 +411,6 @@ function renderList() {
 
   const items = visibleProblems();
 
-  if (items.length === 0) {
-    listEl.innerHTML = `<p class="empty">${emptyMessage()}</p>`;
-    return;
-  }
-
   if (VIEW === "due") {
     // Project each problem into the plain shape selection.js expects, keeping
     // a back-reference so we can render the original record afterwards.
@@ -414,9 +429,21 @@ function renderList() {
       picked = candidates.slice().sort(comparePriority).slice(0, WINDOW_SIZE);
     }
 
+    const done = PROBLEMS
+      .filter((p) => (CAT_FILTER === "all" || p.cat === CAT_FILTER) && isDoneToday(p))
+      .sort((a, b) => catRank(a.cat) - catRank(b.cat) || a.n - b.n);
+
+    const body = picked.length
+      ? picked.map((x) => rowHTML(x.problem)).join("")
+      : `<p class="empty">${emptyMessage()}</p>`;
+
     listEl.innerHTML =
-      windowNoteHTML(picked.length, candidates.length) +
-      picked.map((x) => rowHTML(x.problem)).join("");
+      windowNoteHTML(picked.length, candidates.length) + body + doneSectionHTML(done);
+    return;
+  }
+
+  if (items.length === 0) {
+    listEl.innerHTML = `<p class="empty">${emptyMessage()}</p>`;
     return;
   }
 
@@ -442,6 +469,23 @@ function renderList() {
     .join("");
 }
 
+/* Problems graded today, kept on screen so the trigger sentence stays reachable
+ * after grading instead of disappearing with the row. */
+function doneSectionHTML(done) {
+  if (!done.length) return "";
+  const withNotes = done.filter((p) => (prog(p).trigger || "").trim()).length;
+  const missing = done.length - withNotes;
+  const count = missing
+    ? `${done.length} · <span class="done__missing">${missing} without a note</span>`
+    : `${done.length} · all noted`;
+  return (
+    `<div class="group__head done__head">` +
+      `<h2>✓ Done today</h2><span class="group__count">${count}</span>` +
+    `</div>` +
+    done.map(rowHTML).join("")
+  );
+}
+
 function emptyMessage() {
   if (VIEW === "due")
     return CAT_FILTER === "all"
@@ -456,9 +500,18 @@ function rowHTML(p) {
   const pid = id(p);
   const open = pid === OPEN_ID ? " is-open" : "";
   const solved = p.s ? " is-solved" : "";
+  const doneToday = isDoneToday(p);
+  const doneCls = doneToday ? " is-done" : "";
 
   let meta = "";
-  if (st.box === 0) {
+  if (doneToday) {
+    const g = GRADES.find((x) => x.box === st.box);
+    const noteCls = (st.trigger || "").trim() ? "" : " needs-note";
+    meta =
+      `<span class="row__meta is-graded${noteCls}">` +
+      `${g ? g.label : "graded"} · next in ${daysUntil(st.due)}d` +
+      `${noteCls ? " · no note yet" : ""}</span>`;
+  } else if (st.box === 0) {
     meta = '<span class="row__meta">new</span>';
   } else {
     const d = daysUntil(st.due);
@@ -470,7 +523,7 @@ function rowHTML(p) {
   }
 
   return (
-    `<div class="row box-${st.box}${open}${solved}" data-id="${pid}">` +
+    `<div class="row box-${st.box}${open}${solved}${doneCls}" data-id="${pid}">` +
       `<div class="row__top">` +
         `<span class="row__box"></span>` +
         `<span class="row__num">${p.n}</span>` +
@@ -483,10 +536,11 @@ function rowHTML(p) {
 }
 
 function panelHTML(p, st) {
+  const gradedToday = isDoneToday(p);
   const grades = GRADES.map(
     (g) =>
-      `<button class="grade ${g.cls}" data-grade="${g.box}">` +
-      `${g.label}<small>${g.sub}</small></button>`
+      `<button class="grade ${g.cls}${gradedToday && g.box === st.box ? " is-chosen" : ""}" ` +
+      `data-grade="${g.box}">${g.label}<small>${g.sub}</small></button>`
   ).join("");
 
   const src = p.f
@@ -498,14 +552,34 @@ function panelHTML(p, st) {
       ? `<p class="history">Attempts: ${st.attempts}${st.last ? ` · last reviewed ${st.last}` : ""}</p>`
       : "";
 
+  const triggerBlock = (label) =>
+    `<div class="trigger">` +
+      `<p class="panel__label">${label}</p>` +
+      `<textarea data-trigger placeholder="e.g. 'sorted array + find a pair → two pointers from both ends'">${escapeHTML(st.trigger || "")}</textarea>` +
+      `<p class="trigger__hint">This one sentence is what transfers to new problems. Saved automatically.</p>` +
+    `</div>`;
+
+  // After grading, the note prompt comes FIRST and the panel stays open — the
+  // old flow put it below the grade buttons, which dismissed the panel, so it
+  // was unreachable in normal use (56 of 57 problems ended up with no note).
+  if (gradedToday) {
+    const g = GRADES.find((x) => x.box === st.box);
+    return (
+      `<p class="panel__confirm">✓ Graded <strong>${g ? g.label : "?"}</strong>` +
+      ` · next review in ${daysUntil(st.due)} days</p>` +
+      triggerBlock("Before you close this — what tipped you off to the pattern?") +
+      `<button class="close-panel" data-close>done, close it</button>` +
+      `<p class="panel__label panel__regrade">Graded it wrong? Change it</p>` +
+      `<div class="grades">${grades}</div>` +
+      src +
+      hist
+    );
+  }
+
   return (
     `<p class="panel__label">Grade your attempt (solve it blind first)</p>` +
     `<div class="grades">${grades}</div>` +
-    `<div class="trigger">` +
-      `<p class="panel__label">Trigger sentence — what tips you off to the pattern?</p>` +
-      `<textarea data-trigger placeholder="e.g. 'sorted array + find a pair → two pointers from both ends'">${escapeHTML(st.trigger || "")}</textarea>` +
-      `<p class="trigger__hint">This one sentence is what transfers to new problems. Saved automatically.</p>` +
-    `</div>` +
+    triggerBlock("Trigger sentence — what tips you off to the pattern?") +
     src +
     hist
   );
@@ -569,6 +643,13 @@ listEl.addEventListener("click", (e) => {
     render();
     return;
   }
+  // "done, close it"? Must run before the row toggle below, or the row would
+  // just reopen on the same click.
+  if (e.target.closest("[data-close]")) {
+    OPEN_ID = null;
+    render();
+    return;
+  }
   // grade button?
   const g = e.target.closest(".grade");
   if (g) {
@@ -606,7 +687,10 @@ function gradeProblem(pid, box) {
     trigger: cur.trigger || "",
   };
   saveState();
-  OPEN_ID = null; // collapse after grading so the list feels like a worklist
+  // Stay open. The row relocates to "Done today" and keeps the note prompt on
+  // screen; FOCUS_TRIGGER makes render() put the cursor in it.
+  OPEN_ID = pid;
+  FOCUS_TRIGGER = true;
   render();
 }
 
