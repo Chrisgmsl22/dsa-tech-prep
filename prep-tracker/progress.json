@@ -42,10 +42,10 @@
     "trigger": ""
   },
   "arrays_and_strings#8": {
-    "attempts": 3,
-    "box": 1,
-    "due": "2026-08-04",
-    "last": "2026-08-03",
+    "attempts": 4,
+    "box": 3,
+    "due": "2026-08-11",
+    "last": "2026-08-04",
     "trigger": ""
   },
   "backtracking#1": {
