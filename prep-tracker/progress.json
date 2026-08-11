@@ -175,32 +175,32 @@
     "trigger": ""
   },
   "hashmaps_and_sets#1": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-10",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 3,
+    "due": "2026-08-17",
+    "last": "2026-08-10",
+    "trigger": "Overkill is not always needed, compare both places, do we need to use a collector? (hashMap, set) or is a counter enough"
   },
   "hashmaps_and_sets#2": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-10",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-08-31",
+    "last": "2026-08-10",
+    "trigger": "Comparing against a storage (seen), fast lookup, no repeated values, use lengths for your advantage"
   },
   "hashmaps_and_sets#3": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-11",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-08-31",
+    "last": "2026-08-10",
+    "trigger": "Compare attributes between strings using a data structure (hashMap), do counters matter?\nDont go end to end, as soon as you know condition is not valid, we can simply return False"
   },
   "hashmaps_and_sets#4": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-11",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-08-31",
+    "last": "2026-08-10",
+    "trigger": "Compare 2 contents, frequencyCounter, basic checks, check valid contraints for lookups, you can compare hashMaps"
   },
   "heaps#1": {
     "attempts": 0,
