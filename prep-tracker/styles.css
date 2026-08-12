@@ -267,3 +267,48 @@ html, body {
 
 .foot__note.is-warn { color: var(--stack); }
 .foot__note.is-error { color: var(--danger); }
+
+/* ---------- sprint view ---------- */
+.tab--sprint .tab__badge { background: var(--box4); }
+.tab--sprint.is-active { background: var(--box4); border-color: var(--box4); }
+.tab--sprint.is-active .tab__badge { background: var(--ink); color: var(--box4); }
+
+.sprint-note { align-items: baseline; }
+.sprint-note__tip { color: var(--idle); font-size: 11px; white-space: nowrap; }
+
+.day__head { margin-top: 26px; }
+.day__head.is-complete h2 { color: var(--active); }
+.day__head.is-complete h2::after { content: " ✓"; }
+
+/* priority pill — importance, independent of progress */
+.prio {
+  flex: 0 0 auto; font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  border: 1px solid var(--line); border-radius: 20px; padding: 1px 8px;
+  font-family: "Chakra Petch"; font-weight: 600;
+}
+.prio--essential { color: var(--active); border-color: rgba(79,224,192,0.4); }
+.prio--stretch   { color: var(--box4);  border-color: rgba(108,156,255,0.4); }
+.prio--optional  { color: var(--idle);  border-color: var(--line); }
+
+.set-tag {
+  color: var(--stack); font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; margin-right: 4px;
+}
+
+/* left border + dot track STATUS, the same way box colors do elsewhere */
+.row--sprint.st-none    { border-left-color: var(--box0); }
+.row--sprint.st-done    { border-left-color: var(--active); }
+.row--sprint.st-stuck   { border-left-color: var(--box1); }
+.row--sprint.st-skipped { border-left-color: var(--visited); opacity: 0.7; }
+
+.st-none    .row__box { background: var(--box0); }
+.st-done    .row__box { background: var(--active); }
+.st-stuck   .row__box { background: var(--box1); }
+.st-skipped .row__box { background: var(--visited); }
+
+.grade.s-done:hover    { border-color: var(--active); }
+.grade.s-stuck:hover   { border-color: var(--box1); }
+.grade.s-skipped:hover { border-color: var(--visited); }
+
+.history a { color: var(--active); text-decoration: none; border-bottom: 1px solid rgba(79,224,192,0.35); }
+.history a:hover { border-bottom-color: var(--active); }

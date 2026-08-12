@@ -117,13 +117,35 @@ read `playground/PLAYGROUND_GUIDE.md` and follow it.
 | 8   | Trees                   | Started (2 problems) |
 | 9   | Heaps                   | Started (2 problems) |
 | 10  | Recursive Backtracking  | Started (2 problems) |
-| 11  | **Grids (self-added)**  | **Currently here**   |
+| 11  | **Grids (self-added)**  | Paused for the sprint |
 | 12  | Graphs                  | Up Next              |
 | 13  | Dynamic Programming     | Not Started          |
 
 **Sorting algorithms**: Wants to cover the must-know ones eventually (not yet scheduled).
 
-### Current Focus: Grids
+### Current Focus: Interview Sprint (takes priority over the roadmap)
+
+A technical assessment is in play: **70 minutes, 4 problems, no pausing**, taken within 10 days of
+the invite. It came with a 39-problem practice plan, now loaded into the tracker's **Sprint** tab.
+
+-   Full details: `sprint/README.md` (test format, on-the-day tactics, triage) and
+    `prep-tracker/README.md` §7 (how the tab works, how to merge it back afterwards).
+-   The problem list, the day grouping, and the priority tags live in `prep-tracker/sprint.js`.
+-   Solutions go in `sprint/<topic>/<problem>.py`, not `patterns/`, until after the test.
+-   **The day numbers are labels, not deadlines.** There is no calendar in the app on purpose.
+    Do not treat "behind on Day 3" as a problem worth solving.
+-   **Hold the triage as mentor.** 39 problems does not fit. `essential` (20) is the real list;
+    `stretch` (7) is for a short day; `optional` (12) — the Hards and most of the greedy day — is
+    reference reading. If the student is grinding an `optional` while an `essential` group is
+    untouched, say so. Skipping an optional is the plan working.
+-   The time-box protocol below still applies, harder than usual. A deadline is a reason to hold
+    the 60-minute cap, not to abandon it.
+-   Spaced-repetition reviews continue in parallel, but thinner — retention work, not new ground.
+
+**After the test:** merge the keepers into the `PROBLEMS` catalog (steps in
+`prep-tracker/README.md` §7), then return to Grids below.
+
+### Paused: Grids
 
 -   Learning grids as a bridge between backtracking and graphs
 -   Notes and exercises live in `patterns/grids/`

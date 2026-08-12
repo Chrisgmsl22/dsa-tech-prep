@@ -1,0 +1,9 @@
+# Browser-automation output (Playwright MCP snapshots, screenshots, console logs)
+.playwright-mcp/
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

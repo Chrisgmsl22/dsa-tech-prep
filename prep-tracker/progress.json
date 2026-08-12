@@ -371,31 +371,31 @@
     "trigger": ""
   },
   "two_pointers#1": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-11",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 1,
+    "due": "2026-08-12",
+    "last": "2026-08-11",
+    "trigger": "2 Pointers, one at each side, compare ABS values, reverse an array"
   },
   "two_pointers#2": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-12",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-09-01",
+    "last": "2026-08-11",
+    "trigger": "2 pointers, swap them, Python allows us to now need a temp variable, iterate until pointers go out of bounds"
   },
   "two_pointers#3": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-12",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-09-01",
+    "last": "2026-08-11",
+    "trigger": "2 pointers, compare biggest vs smallest value, adjust based on how close to our target we are, read the specifications of what you're being asked"
   },
   "two_pointers#4": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-07-12",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-09-01",
+    "last": "2026-08-11",
+    "trigger": "Be really mindful of constraints, need to cleanup the string first, 2 pointers compare, break once condition is not valid arr[ : : -1]"
   }
 }

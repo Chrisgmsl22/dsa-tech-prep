@@ -92,6 +92,7 @@ No install step — this uses Node's built-in test runner.
 - **New** — the ~43 roadmap problems you haven't solved yet, grouped by category (core first).
   Grading one for the first time pulls it into the rotation.
 - **All** — the entire 100-problem roadmap with every problem's current box and next-review date.
+- **Sprint** — the deadline-driven 9-day plan (see section 7). Separate from everything above.
 - **How it works** — an in-app summary of everything here.
 
 Use the **category chips** under the tabs to filter any view down to one category (handy for a
@@ -137,3 +138,49 @@ The solved/unsolved state and repo file paths live in the `PROBLEMS` array near 
 
 On the next load, the app seeds that newly-solved problem into the review rotation automatically
 (the seeding step is idempotent — it only touches problems it hasn't seen before).
+
+---
+
+## 7. The Sprint tab
+
+A second track for a specific interview, living alongside the rotation: the 39-problem plan that
+came with a technical-assessment invite, split into 9 named days.
+
+It is a **checklist with memory, not a second scheduler**:
+
+- No Leitner box, no due date, **no calendar**. The day names are labels for chunks of the list,
+  not deadlines — nothing turns red and falling a day behind costs nothing.
+- Nothing in the Sprint tab can ever appear in **Due today**.
+- Each problem is marked **Done**, **Stuck**, or **Skipped**. Clicking the active status clears it.
+- The trigger-sentence field works exactly as it does in the review flow, and it survives the
+  merge below.
+- **Reset all** deliberately *keeps* the sprint. Wiping Leitner state is recoverable; wiping a
+  mid-flight sprint days before a real test is not.
+
+The catalog lives in `sprint.js`. The `pri` field carries the triage — 39 problems does not fit
+inside a 60-minute-per-problem cap, so:
+
+| `pri` | Count | Meaning |
+| ----- | ----- | ------- |
+| `essential` | 20 | Do it. Core pattern, squarely in the test's stated scope. |
+| `stretch` | 7 | Do it if the day runs short. |
+| `optional` | 12 | Reference only — the Hards and most of the greedy day. |
+
+Skipping an `optional` is the plan working as intended, not a failure.
+
+Solutions go in `sprint/<topic>/<problem>.py`. Each row's panel prints the exact path.
+
+### Merging the sprint back in (after the test)
+
+Ten sprint problems already exist in the catalog — their `maps` field names the twin (`"cat#n"`),
+and the row shows ✓ when that twin is solved. For each problem worth keeping:
+
+1. Move the file from `sprint/<topic>/` into `patterns/<category>/`.
+2. If it has a `maps` twin, flip that `PROBLEMS` entry to `s: true` and set its `f` path. If it
+   does not, add a new `PROBLEMS` entry.
+3. Copy the note across: `progress.json`'s `"sprint#<slug>".trigger` → the new `"cat#n".trigger`.
+4. Two sprint days have no catalog category yet. To keep those problems, add `greedy_intervals`
+   and `sorting` to `CAT_META`, `CAT_ORDER`, and `TIERS[3]` in `selection.js`.
+5. Delete the `sprint#` keys you merged, so a note never lives in two places.
+
+The seeding step then pulls each newly-solved problem into the rotation on the next load.

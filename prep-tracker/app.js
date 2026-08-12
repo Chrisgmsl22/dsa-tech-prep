@@ -212,6 +212,34 @@ function catRank(cat) {
   return i === -1 ? 99 : i;
 }
 
+/* ---------- sprint helpers (see sprint.js) ----------
+ * Sprint rows live in the SAME flat STATE object as catalog problems, keyed
+ * "sprint#<slug>". Two consequences, both deliberate:
+ *   - the existing `input` handler writes STATE[pid].trigger for whatever
+ *     data-id a row carries, so the note field needs no new code;
+ *   - seedIfNeeded() iterates PROBLEMS only, so a sprint key can never be
+ *     handed a Leitner box or a due date and can never reach "Due today".
+ */
+const SPRINT_PREFIX = "sprint#";
+const SPRINT_STATUS = [
+  { key: "done",    cls: "s-done",    label: "Done",    sub: "solved it — write the trigger" },
+  { key: "stuck",   cls: "s-stuck",   label: "Stuck",   sub: "read the solution / hit the cap" },
+  { key: "skipped", cls: "s-skipped", label: "Skipped", sub: "reference only — moving on" },
+];
+const PRI_RANK = { essential: 0, stretch: 1, optional: 2 };
+
+const PROBLEM_BY_ID = {};
+for (const p of PROBLEMS) PROBLEM_BY_ID[id(p)] = p;
+const SPRINT_GROUP_BY_N = {};
+for (const grp of SPRINT_GROUPS) SPRINT_GROUP_BY_N[grp.g] = grp;
+
+function sid(s) { return SPRINT_PREFIX + s.slug; }
+function sprog(s) { return STATE[sid(s)] || { status: null, trigger: "" }; }
+function isSprintKey(k) { return k.indexOf(SPRINT_PREFIX) === 0; }
+function sprintFilePath(s) {
+  return `sprint/${SPRINT_GROUP_BY_N[s.g].dir}/${s.slug.replace(/-/g, "_")}.py`;
+}
+
 /* ---------- persistence ----------
  * Two modes:
  *  - SERVER MODE: opened via server.py. Progress is read from and written back to
@@ -352,6 +380,7 @@ const listEl = document.getElementById("list");
 const statsEl = document.getElementById("stats");
 const filterEl = document.getElementById("filter");
 const dueBadge = document.getElementById("dueBadge");
+const sprintBadge = document.getElementById("sprintBadge");
 
 function render() {
   renderStats();
@@ -380,8 +409,27 @@ function renderStats() {
   const coreTotal = PROBLEMS.filter((p) => CORE.has(p.cat)).length;
   const coreSolved = PROBLEMS.filter((p) => CORE.has(p.cat) && p.s).length;
   const mastered = PROBLEMS.filter((p) => prog(p).box === 4).length;
+  const sprintDone = SPRINT.filter((s) => sprog(s).status === "done").length;
 
   dueBadge.textContent = dueCount;
+  sprintBadge.textContent = sprintDone;
+
+  // The sprint answers a different question from the rotation: not "how deep is
+  // my memory" but "how much of the list have I covered, and where am I stuck".
+  if (VIEW === "sprint") {
+    const essential = SPRINT.filter((s) => s.pri === "essential");
+    const essentialDone = essential.filter((s) => sprog(s).status === "done").length;
+    const stuck = SPRINT.filter((s) => sprog(s).status === "stuck").length;
+    const noted = SPRINT.filter((s) => (sprog(s).trigger || "").trim()).length;
+    statsEl.innerHTML = [
+      stat("due", stuck, "marked stuck"),
+      stat("core", `${essentialDone}/${essential.length}`, "essential done"),
+      stat("solved", `${sprintDone}/${SPRINT.length}`, "sprint done"),
+      stat("", noted, "trigger notes"),
+    ].join("");
+    return;
+  }
+
   statsEl.innerHTML = [
     stat("due", dueCount, "due today"),
     stat("solved", `${solvedCount}/${PROBLEMS.length}`, "solved locally"),
@@ -398,6 +446,10 @@ function stat(mod, num, label) {
 }
 
 function renderFilter() {
+  // AlgoMap category chips mean nothing inside the sprint, which groups by day.
+  filterEl.style.display = VIEW === "sprint" ? "none" : "";
+  if (VIEW === "sprint") return;
+
   const cats = ["all", ...CAT_ORDER];
   filterEl.innerHTML = cats
     .map((c) => {
@@ -440,6 +492,10 @@ function windowNoteHTML(shown, total) {
 function renderList() {
   if (VIEW === "help") {
     listEl.innerHTML = HELP_HTML;
+    return;
+  }
+  if (VIEW === "sprint") {
+    renderSprintList();
     return;
   }
 
@@ -586,12 +642,7 @@ function panelHTML(p, st) {
       ? `<p class="history">Attempts: ${st.attempts}${st.last ? ` · last reviewed ${st.last}` : ""}</p>`
       : "";
 
-  const triggerBlock = (label) =>
-    `<div class="trigger">` +
-      `<p class="panel__label">${label}</p>` +
-      `<textarea data-trigger placeholder="e.g. 'sorted array + find a pair → two pointers from both ends'">${escapeHTML(st.trigger || "")}</textarea>` +
-      `<p class="trigger__hint">This one sentence is what transfers to new problems. Saved automatically.</p>` +
-    `</div>`;
+  const triggerBlock = (label) => triggerBlockHTML(label, st.trigger);
 
   // After grading, the note prompt comes FIRST and the panel stays open — the
   // old flow put it below the grade buttons, which dismissed the panel, so it
@@ -617,6 +668,130 @@ function panelHTML(p, st) {
     src +
     hist
   );
+}
+
+/* Shared by the catalog panel and the sprint panel. The note field is the one
+ * piece of the review flow the sprint keeps, because the trigger sentence is
+ * what survives past the test. */
+function triggerBlockHTML(label, value) {
+  return (
+    `<div class="trigger">` +
+      `<p class="panel__label">${label}</p>` +
+      `<textarea data-trigger placeholder="e.g. 'sorted array + find a pair → two pointers from both ends'">${escapeHTML(value || "")}</textarea>` +
+      `<p class="trigger__hint">This one sentence is what transfers to new problems. Saved automatically.</p>` +
+    `</div>`
+  );
+}
+
+/* ---------- sprint view ----------
+ * A flat checklist, every day always visible: a problem from Tuesday is still
+ * fair game on Friday, so nothing is collapsed or filtered away.
+ */
+function sprintNoteHTML() {
+  const done = SPRINT.filter((s) => sprog(s).status === "done").length;
+  return (
+    `<div class="window-note sprint-note">` +
+      `<span><strong>${done}</strong> of ${SPRINT.length} covered · ` +
+      `${SPRINT_META.format}</span>` +
+      `<span class="sprint-note__tip">${SPRINT_META.order}</span>` +
+    `</div>`
+  );
+}
+
+function renderSprintList() {
+  const sections = SPRINT_GROUPS.map((grp) => {
+    // Set first, then essential-first, so the list reads top-down as "do these,
+    // then these". The simulation group is a timed run of ONE set — sorting by
+    // priority alone would interleave A and B and scramble that grouping.
+    const items = SPRINT.filter((s) => s.g === grp.g).sort(
+      (a, b) =>
+        (a.set || "").localeCompare(b.set || "") || PRI_RANK[a.pri] - PRI_RANK[b.pri]
+    );
+    const done = items.filter((s) => sprog(s).status === "done").length;
+    const complete = done === items.length ? " is-complete" : "";
+
+    return (
+      `<div class="group__head day__head${complete}">` +
+        `<h2>Day ${grp.g} · ${grp.label}</h2>` +
+        `<span class="group__count">${done}/${items.length}</span>` +
+      `</div>` +
+      items.map((s, i) => sprintRowHTML(s, i + 1)).join("")
+    );
+  }).join("");
+
+  listEl.innerHTML = sprintNoteHTML() + sections;
+}
+
+function sprintRowHTML(s, n) {
+  const st = sprog(s);
+  const key = sid(s);
+  const open = key === OPEN_ID ? " is-open" : "";
+  const twin = s.maps ? PROBLEM_BY_ID[s.maps] : null;
+  const status = st.status || "none";
+  const hasNote = (st.trigger || "").trim() !== "";
+
+  let meta = "";
+  if (status === "done") {
+    meta = `<span class="row__meta is-graded${hasNote ? "" : " needs-note"}">` +
+           `done${hasNote ? "" : " · no note yet"}</span>`;
+  } else if (status === "stuck") {
+    meta = '<span class="row__meta is-overdue">stuck</span>';
+  } else if (status === "skipped") {
+    meta = '<span class="row__meta">skipped</span>';
+  } else if (twin && twin.s) {
+    meta = '<span class="row__meta is-due">already solved</span>';
+  }
+
+  const setTag = s.set ? `<span class="set-tag">set ${s.set}</span> ` : "";
+
+  return (
+    `<div class="row row--sprint st-${status}${open}" data-id="${key}">` +
+      `<div class="row__top">` +
+        `<span class="row__box"></span>` +
+        `<span class="row__num">${n}</span>` +
+        `<span class="prio prio--${s.pri}">${s.pri}</span>` +
+        `<span class="row__title">${setTag}${s.title}</span>` +
+        `${meta}` +
+      `</div>` +
+      `<div class="row__panel">${sprintPanelHTML(s, st)}</div>` +
+    `</div>`
+  );
+}
+
+function sprintPanelHTML(s, st) {
+  const buttons = SPRINT_STATUS.map(
+    (g) =>
+      `<button class="grade ${g.cls}${st.status === g.key ? " is-chosen" : ""}" ` +
+      `data-status="${g.key}">${g.label}<small>${g.sub}</small></button>`
+  ).join("");
+
+  const twin = s.maps ? PROBLEM_BY_ID[s.maps] : null;
+  let twinLine = "";
+  if (twin && twin.s) {
+    twinLine = `<p class="history">✓ already in the tracker · <code>${twin.f}</code></p>`;
+  } else if (twin) {
+    twinLine = `<p class="history">in the AlgoMap catalog under ${CAT_META[twin.cat].label}, not solved yet</p>`;
+  }
+
+  return (
+    `<p class="panel__label">Mark it — no box, no due date, nothing enters your review queue</p>` +
+    `<div class="grades">${buttons}</div>` +
+    triggerBlockHTML("Trigger sentence — what tips you off to the pattern?", st.trigger) +
+    `<p class="history">🔗 <a href="${s.url}" target="_blank" rel="noopener">open on LeetCode</a></p>` +
+    `<p class="history">📄 put your solution in <code>${sprintFilePath(s)}</code></p>` +
+    twinLine
+  );
+}
+
+/* Clicking the active status clears it, so a mis-click is one click to undo. */
+function setSprintStatus(pid, status) {
+  const cur = STATE[pid] || { status: null, trigger: "" };
+  cur.status = cur.status === status ? null : status;
+  STATE[pid] = cur;
+  saveState({ immediate: true }); // discrete event — never debounce it
+  OPEN_ID = pid;
+  FOCUS_TRIGGER = true;
+  render();
 }
 
 function escapeHTML(s) {
@@ -651,7 +826,17 @@ const HELP_HTML = `
   <h3>The mix</h3>
   <p>Your solved problems (📄 = a file already exists in this repo) were seeded into rotation and staggered so only ~3 come due per day — that's your <strong>retention</strong> work. Drip in a new problem whenever you have appetite — that's your <strong>growth</strong>. Weak buckets (red/amber) always sort to the top so you face them first.</p>
 
-  <p style="color:#7f8c9b">No hard interview date, ~30–60 min/day → this pacing is built for steady, sustainable progress while you start applying.</p>
+  <h3>The Sprint tab</h3>
+  <p>A separate track for a specific interview: the 39-problem plan that came with the assessment invite, grouped into 9 days. It is a <strong>checklist with memory</strong>, not a second scheduler — no boxes, no due dates, no calendar, and nothing there ever appears in <strong>Due today</strong>. The day numbers are labels for chunks of the list, so falling a day behind costs you nothing.</p>
+  <ul>
+    <li>Mark each one <strong>Done</strong>, <strong>Stuck</strong>, or <strong>Skipped</strong>. Click the active one again to clear it.</li>
+    <li>The trigger sentence works exactly as it does here, and it survives the merge.</li>
+    <li><span style="color:#4fe0c0">essential</span> = do it · <span style="color:#6c9cff">stretch</span> = if the day runs short · <span style="color:#3a4654">optional</span> = reference only. Skipping an optional is the plan working, not a failure.</li>
+    <li><strong>Reset all</strong> does not touch the sprint.</li>
+  </ul>
+  <p>After the test, the keepers get folded into the 100-problem catalog and join this rotation. See <em>Merging the sprint back in</em> in the README.</p>
+
+  <p style="color:#7f8c9b">Retention here stays at ~30–60 min/day. The sprint is the thing with a clock on it.</p>
 </div>`;
 
 /* ---------- events ---------- */
@@ -684,6 +869,14 @@ listEl.addEventListener("click", (e) => {
     render();
     return;
   }
+  // sprint status button? Checked before .grade — sprint buttons reuse the
+  // .grade class for styling but carry data-status instead of data-grade.
+  const sb = e.target.closest("[data-status]");
+  if (sb) {
+    setSprintStatus(sb.closest(".row").dataset.id, sb.dataset.status);
+    e.stopPropagation();
+    return;
+  }
   // grade button?
   const g = e.target.closest(".grade");
   if (g) {
@@ -692,6 +885,9 @@ listEl.addEventListener("click", (e) => {
     e.stopPropagation();
     return;
   }
+  // A link inside a panel (the LeetCode button) must not collapse the row out
+  // from under the click.
+  if (e.target.closest("a")) return;
   // toggle open?
   const row = e.target.closest(".row");
   if (!row) return;
@@ -708,6 +904,17 @@ listEl.addEventListener("input", (e) => {
   STATE[pid] = STATE[pid] || { box: 0, due: null, last: null, attempts: 0, trigger: "" };
   STATE[pid].trigger = ta.value;
   saveState();
+
+  // Keep the row's "no note yet" warning honest as you type. A full render()
+  // here would destroy the textarea and drop the cursor mid-sentence, so patch
+  // the one element instead. Both row kinds end their meta the same way.
+  const meta = row.querySelector(".row__meta.is-graded");
+  if (meta) {
+    const hasNote = ta.value.trim() !== "";
+    meta.classList.toggle("needs-note", !hasNote);
+    meta.textContent = meta.textContent.replace(/ · no note yet$/, "");
+    if (!hasNote) meta.textContent += " · no note yet";
+  }
 });
 
 function gradeProblem(pid, box) {
@@ -729,8 +936,12 @@ function gradeProblem(pid, box) {
 }
 
 document.getElementById("resetBtn").addEventListener("click", () => {
-  if (!confirm("Reset ALL progress? This clears every box, due date, and trigger note.")) return;
-  STATE = {};
+  if (!confirm("Reset ALL progress? This clears every box, due date, and trigger note.\n\nYour Sprint checklist is KEPT — it has a deadline and no way to rebuild itself.")) return;
+  // Preserve the sprint. Wiping Leitner state is a recoverable annoyance;
+  // wiping a mid-flight sprint days before a real test is not.
+  const kept = {};
+  for (const k of Object.keys(STATE)) if (isSprintKey(k)) kept[k] = STATE[k];
+  STATE = kept;
   // Debounced on purpose: seedIfNeeded() below saves immediately, and its
   // clearTimeout cancels this empty write so only the seeded state is posted.
   saveState();
