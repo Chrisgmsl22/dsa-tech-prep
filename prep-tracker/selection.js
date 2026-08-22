@@ -19,7 +19,7 @@
 const TIERS = {
   1: ["arrays_and_strings", "hashmaps_and_sets", "two_pointers", "sliding_window", "stacks"],
   2: ["trees", "binary_search", "linked_lists", "graphs"],
-  3: ["heaps", "backtracking", "dp"],
+  3: ["heaps", "backtracking", "dp", "greedy", "sorting"],
 };
 
 const TIER_SHARE = { 1: 0.5, 2: 0.35, 3: 0.15 };

@@ -34,13 +34,15 @@ const CAT_META = {
   backtracking:       { label: "Backtracking",     glyph: "⌥" },
   graphs:             { label: "Graphs",           glyph: "◈" },
   dp:                 { label: "Dynamic Programming", glyph: "Σ" },
+  greedy:             { label: "Greedy & Intervals", glyph: "◤" },
+  sorting:            { label: "Sorting",          glyph: "⇅" },
 };
 
 // Category display order (core first, then roadmap order).
 const CAT_ORDER = [
   "arrays_and_strings", "hashmaps_and_sets", "two_pointers", "sliding_window",
   "stacks", "linked_lists", "binary_search", "trees", "heaps",
-  "backtracking", "graphs", "dp",
+  "backtracking", "graphs", "dp", "greedy", "sorting",
 ];
 
 // AlgoMap roadmap. s = has a solution file in this repo; f = its path.
@@ -57,6 +59,12 @@ const PROBLEMS = [
   { cat: "arrays_and_strings", n: 9,  title: "Merge Intervals",              s: false },
   { cat: "arrays_and_strings", n: 10, title: "Spiral Matrix",                s: true,  f: "patterns/grids/spiral_traverse.py" },
   { cat: "arrays_and_strings", n: 11, title: "Rotate Image",                 s: false },
+  { cat: "arrays_and_strings", n: 12, title: "Running Sum of 1d Array",      s: true,  f: "patterns/prefix_sum/running_sum.py" },
+  { cat: "arrays_and_strings", n: 13, title: "Rotate Array",                 s: true,  f: "patterns/arrays_and_strings/rotate_array.py" },
+  { cat: "arrays_and_strings", n: 14, title: "Reverse String II",            s: false },
+  { cat: "arrays_and_strings", n: 15, title: "Spiral Matrix III",            s: false },
+  { cat: "arrays_and_strings", n: 16, title: "Text Justification",           s: false },
+  { cat: "arrays_and_strings", n: 17, title: "Longest Common Prefix of K Strings After Removal", s: false },
 
   // ---- Hashmaps & Sets ----
   { cat: "hashmaps_and_sets", n: 1,  title: "Jewels and Stones",             s: true,  f: "patterns/hashmaps_and_sets/jewels_and_stones.py" },
@@ -69,6 +77,8 @@ const PROBLEMS = [
   { cat: "hashmaps_and_sets", n: 8,  title: "Group Anagrams",                s: false },
   { cat: "hashmaps_and_sets", n: 9,  title: "Majority Element",              s: false },
   { cat: "hashmaps_and_sets", n: 10, title: "Longest Consecutive Sequence",  s: false },
+  { cat: "hashmaps_and_sets", n: 11, title: "Happy Number",                  s: false },
+  { cat: "hashmaps_and_sets", n: 12, title: "Count Anagrams",                s: false },
 
   // ---- 2 Pointers ----
   { cat: "two_pointers", n: 1, title: "Squares of a Sorted Array",           s: true,  f: "patterns/two_pointers/squares_of_sorted_arr.py" },
@@ -78,6 +88,10 @@ const PROBLEMS = [
   { cat: "two_pointers", n: 5, title: "3Sum",                                s: false },
   { cat: "two_pointers", n: 6, title: "Container With Most Water",           s: false },
   { cat: "two_pointers", n: 7, title: "Trapping Rain Water",                 s: false },
+  { cat: "two_pointers", n: 8, title: "Merge Sorted Array",              s: true,  f: "patterns/two_pointers/merge_sorted_array.py" },
+  { cat: "two_pointers", n: 9, title: "Remove Duplicates from Sorted Array II", s: false },
+  { cat: "two_pointers", n: 10, title: "Move Zeroes",                    s: false },
+  { cat: "two_pointers", n: 11, title: "4Sum",                           s: false },
 
   // ---- Sliding Window ----
   { cat: "sliding_window", n: 1, title: "Maximum Average Subarray I",        s: true,  f: "patterns/sliding_window/max_average_subarr.py" },
@@ -86,6 +100,8 @@ const PROBLEMS = [
   { cat: "sliding_window", n: 4, title: "Longest Repeating Character Replacement", s: true, f: "patterns/sliding_window/longest_repeating_character_replacement.py" },
   { cat: "sliding_window", n: 5, title: "Minimum Size Subarray Sum",         s: true,  f: "patterns/sliding_window/2025/smallest_subarray_with_num_s.py" },
   { cat: "sliding_window", n: 6, title: "Permutation in String",             s: false },
+  { cat: "sliding_window", n: 7, title: "Minimum Window Substring",       s: false },
+  { cat: "sliding_window", n: 8, title: "Substring with Concatenation of All Words", s: false },
 
   // ---- Stacks ----
   { cat: "stacks", n: 1, title: "Baseball Game",                             s: true,  f: "patterns/stacks/baseball_game.py" },
@@ -112,6 +128,8 @@ const PROBLEMS = [
   { cat: "binary_search", n: 6, title: "Find Minimum in Rotated Sorted Array", s: false },
   { cat: "binary_search", n: 7, title: "Search in Rotated Sorted Array",     s: false },
   { cat: "binary_search", n: 8, title: "Koko Eating Bananas",                s: true,  f: "patterns/binary_search/binary_search_on_answer.py" },
+  { cat: "binary_search", n: 9, title: "Search in Rotated Sorted Array II", s: false },
+  { cat: "binary_search", n: 10, title: "Online Majority Element in Subarray", s: false },
 
   // ---- Trees ----
   { cat: "trees", n: 1,  title: "Invert Binary Tree",                        s: true,  f: "patterns/trees/DFS/invert_binary_tree.py" },
@@ -135,6 +153,7 @@ const PROBLEMS = [
   { cat: "heaps", n: 3, title: "Top K Frequent Elements",                    s: true,  f: "patterns/heaps/top_k_frequent_elements.py" },
   { cat: "heaps", n: 4, title: "K Closest Points to Origin",                 s: true,  f: "patterns/heaps/k_closest_points_to_origin.py" },
   { cat: "heaps", n: 5, title: "Merge K Sorted Linked Lists",                s: false },
+  { cat: "heaps", n: 6, title: "Find Median from Data Stream",             s: false },
 
   // ---- Recursive Backtracking ----
   { cat: "backtracking", n: 1, title: "Subsets",                             s: true,  f: "patterns/backtracking/subsets.py" },
@@ -144,6 +163,8 @@ const PROBLEMS = [
   { cat: "backtracking", n: 5, title: "Letter Combinations of a Phone Number", s: true, f: "patterns/backtracking/phone_letters_combination.py" },
   { cat: "backtracking", n: 6, title: "Generate Parentheses",                s: false },
   { cat: "backtracking", n: 7, title: "Word Search",                         s: false },
+  { cat: "backtracking", n: 8, title: "Word Search II",                    s: false },
+  { cat: "backtracking", n: 9, title: "Sudoku Solver",                     s: false },
 
   // ---- Graphs ----
   { cat: "graphs", n: 1,  title: "Find if Path Exists in Graph",             s: true,  f: "patterns/graphs/find_if_path_exists.py" },
@@ -156,6 +177,7 @@ const PROBLEMS = [
   { cat: "graphs", n: 8,  title: "Rotting Oranges",                          s: false },
   { cat: "graphs", n: 9,  title: "Min Cost to Connect All Points (Prim's)",  s: false },
   { cat: "graphs", n: 10, title: "Network Delay Time (Dijkstra's)",          s: false },
+  { cat: "graphs", n: 11, title: "Number of Enclaves",                    s: false },
 
   // ---- Dynamic Programming ----
   { cat: "dp", n: 1,  title: "Fibonacci Number",                             s: true,  f: "patterns/DP/fibonacci_number.py" },
@@ -168,6 +190,19 @@ const PROBLEMS = [
   { cat: "dp", n: 8,  title: "Coin Change",                                  s: true,  f: "patterns/DP/coin_change.py" },
   { cat: "dp", n: 9,  title: "Longest Increasing Subsequence",               s: false },
   { cat: "dp", n: 10, title: "Longest Common Subsequence",                   s: false },
+  { cat: "dp", n: 11, title: "Best Time to Buy and Sell Stock IV",         s: false },
+  { cat: "dp", n: 12, title: "Minimum Changes to Make K Semi-palindromes", s: false },
+  { cat: "dp", n: 13, title: "Maximum Number of Non-overlapping Palindrome Substrings", s: false },
+  { cat: "dp", n: 14, title: "Dungeon Game",                               s: false },
+
+  // ---- Greedy & Intervals ----
+  { cat: "greedy", n: 1, title: "Insert Interval",                         s: false },
+  { cat: "greedy", n: 2, title: "Non-overlapping Intervals",               s: false },
+  { cat: "greedy", n: 3, title: "Jump Game II",                            s: false },
+  { cat: "greedy", n: 4, title: "Gas Station",                             s: false },
+
+  // ---- Sorting ----
+  { cat: "sorting", n: 1, title: "Sort an Array",                          s: false },
 ];
 
 // Leitner intervals (days) keyed by box.
@@ -416,7 +451,7 @@ function renderStats() {
 
   // The sprint answers a different question from the rotation: not "how deep is
   // my memory" but "how much of the list have I covered, and where am I stuck".
-  if (VIEW === "sprint") {
+  if (VIEW === "sprint" && SPRINT.length) {
     const essential = SPRINT.filter((s) => s.pri === "essential");
     const essentialDone = essential.filter((s) => sprog(s).status === "done").length;
     const stuck = SPRINT.filter((s) => sprog(s).status === "stuck").length;
@@ -699,6 +734,13 @@ function sprintNoteHTML() {
 }
 
 function renderSprintList() {
+  // Empty between interviews. The tab stays so the next problem list has a
+  // home; sprint.js documents the three constants to fill in.
+  if (SPRINT.length === 0) {
+    listEl.innerHTML = SPRINT_EMPTY_HTML;
+    return;
+  }
+
   const sections = SPRINT_GROUPS.map((grp) => {
     // Set first, then essential-first, so the list reads top-down as "do these,
     // then these". The simulation group is a timed run of ONE set — sorting by
@@ -799,6 +841,21 @@ function escapeHTML(s) {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
   );
 }
+
+const SPRINT_EMPTY_HTML = `
+<div class="help">
+  <h2>No sprint loaded</h2>
+  <p>This tab holds a <strong>one-off problem list</strong> that comes with a specific interview — a take-home plan, a screen's prep sheet, a recruiter's topic list. It is a checklist with memory: mark each problem <strong>Done</strong>, <strong>Stuck</strong>, or <strong>Skipped</strong>, and write the trigger sentence. Nothing here gets a box or a due date, so it never touches <strong>Due today</strong>.</p>
+  <h3>To load the next one</h3>
+  <ul>
+    <li>Open <code>prep-tracker/sprint.js</code> — the header documents all three constants.</li>
+    <li>Fill in <code>SPRINT_META</code> (the test's shape), <code>SPRINT_GROUPS</code> (the day chunks), and <code>SPRINT</code> (the problems).</li>
+    <li>Tag each problem <span style="color:#4fe0c0">essential</span>, <span style="color:#6c9cff">stretch</span>, or <span style="color:#3a4654">optional</span>. A list that does not fit is normal — the tag is what you cut.</li>
+    <li>Reload. The tab wakes up.</li>
+  </ul>
+  <h3>The last one</h3>
+  <p>The 2026-08 assessment ran 39 problems across 9 days. All 39 were merged into the main catalog on 2026-08-21, so they are in the normal rotation now — look for them in <strong>All</strong>, including the new <strong>Greedy &amp; Intervals</strong> and <strong>Sorting</strong> categories.</p>
+</div>`;
 
 const HELP_HTML = `
 <div class="help">

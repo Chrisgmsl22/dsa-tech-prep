@@ -3,10 +3,15 @@ const test = require("node:test");
 const assert = require("node:assert");
 const S = require("./selection.js");
 
-test("tier tables cover all 12 categories exactly once", () => {
+// Bump CATEGORY_COUNT when you add a category to CAT_META in app.js. The point
+// of the check is that every category sits in exactly one tier — a category
+// missing from TIERS silently falls back to tier 3 and skews the daily window.
+const CATEGORY_COUNT = 14;
+
+test("tier tables cover every category exactly once", () => {
   const all = [...S.TIERS[1], ...S.TIERS[2], ...S.TIERS[3]];
-  assert.strictEqual(all.length, 12);
-  assert.strictEqual(new Set(all).size, 12);
+  assert.strictEqual(all.length, CATEGORY_COUNT);
+  assert.strictEqual(new Set(all).size, CATEGORY_COUNT);
 });
 
 test("tier shares sum to 1", () => {

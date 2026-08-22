@@ -117,35 +117,40 @@ read `playground/PLAYGROUND_GUIDE.md` and follow it.
 | 8   | Trees                   | Started (2 problems) |
 | 9   | Heaps                   | Started (2 problems) |
 | 10  | Recursive Backtracking  | Started (2 problems) |
-| 11  | **Grids (self-added)**  | Paused for the sprint |
+| 11  | **Grids (self-added)**  | **Currently here**   |
 | 12  | Graphs                  | Up Next              |
 | 13  | Dynamic Programming     | Not Started          |
 
-**Sorting algorithms**: Wants to cover the must-know ones eventually (not yet scheduled).
+**Sorting algorithms**: A `sorting` category now exists in the catalog (Sort an Array), added
+by the 2026-08 sprint merge. Merge sort and quicksort by hand are still not covered.
 
-### Current Focus: Interview Sprint (takes priority over the roadmap)
+### Completed: Interview Sprint (2026-08)
 
-A technical assessment is in play: **70 minutes, 4 problems, no pausing**, taken within 10 days of
-the invite. It came with a 39-problem practice plan, now loaded into the tracker's **Sprint** tab.
+A 70-minute, 4-problem technical assessment, taken 2026-08-20. It arrived with a 39-problem
+practice plan, which lived in the tracker's **Sprint** tab for 9 days.
 
--   Full details: `sprint/README.md` (test format, on-the-day tactics, triage) and
-    `prep-tracker/README.md` §7 (how the tab works, how to merge it back afterwards).
--   The problem list, the day grouping, and the priority tags live in `prep-tracker/sprint.js`.
--   Solutions go in `sprint/<topic>/<problem>.py`, not `patterns/`, until after the test.
--   **The day numbers are labels, not deadlines.** There is no calendar in the app on purpose.
-    Do not treat "behind on Day 3" as a problem worth solving.
--   **Hold the triage as mentor.** 39 problems does not fit. `essential` (20) is the real list;
-    `stretch` (7) is for a short day; `optional` (12) — the Hards and most of the greedy day — is
-    reference reading. If the student is grinding an `optional` while an `essential` group is
-    untouched, say so. Skipping an optional is the plan working.
--   The time-box protocol below still applies, harder than usual. A deadline is a reason to hold
-    the 60-minute cap, not to abandon it.
--   Spaced-repetition reviews continue in parallel, but thinner — retention work, not new ground.
+-   4 problems were attempted: Running Sum (done), Merge Sorted Array, Rotate Array, and Reverse
+    String II (all stuck). The other 35 stayed reference reading. **The triage held** — that was
+    the plan working, not a shortfall.
+-   The final session before the test was a **pattern crash course**, not new problems. The drill
+    sheet is `spaced-repetition-practice/crash_course.py`: ~16 template stubs with specs, meant to
+    be filled in blind, 3 minutes each. Re-run it whenever an interview is close.
+-   On 2026-08-21 all 39 merged into the `PROBLEMS` catalog, so they now ride the normal review
+    rotation. The catalog is **129 problems across 14 categories**, including two new ones:
+    `greedy` (Greedy & Intervals) and `sorting`. Both sit in `TIERS` tier 3.
+-   `prep-tracker/sprint.js` is now an **empty, reusable shell**. When the next interview brings a
+    problem list, fill in its 3 documented constants and the Sprint tab wakes up. See
+    `prep-tracker/README.md` §7.
 
-**After the test:** merge the keepers into the `PROBLEMS` catalog (steps in
-`prep-tracker/README.md` §7), then return to Grids below.
+**Recurring failure modes worth naming as mentor** (all three cost real time this sprint):
 
-### Paused: Grids
+1.  Validating with the smallest parameter, which hides the bug — `k = 2` passed while `k = 3`
+    failed. Push for a test value that separates a constant's two roles.
+2.  Not applying a specifically named fix before writing new code — `k %= n` was named twice and
+    submitted without, twice.
+3.  Using a data value as a sentinel (`if nums[i] == 0`) instead of the given lengths.
+
+### Current Focus: Grids
 
 -   Learning grids as a bridge between backtracking and graphs
 -   Notes and exercises live in `patterns/grids/`

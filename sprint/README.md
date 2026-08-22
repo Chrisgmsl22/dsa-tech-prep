@@ -1,77 +1,70 @@
 # Interview Sprint
 
-Solutions for the practice plan that came with a technical-assessment invite. The checklist, the
-status of each problem, and the trigger notes live in the **Sprint** tab of the Prep Tracker
+Solutions for a **one-off problem list tied to a specific interview** — a take-home plan, a
+screen's prep sheet, a recruiter's topic list. The checklist itself, the per-problem status, and
+the trigger notes live in the **Sprint** tab of the Prep Tracker
 (`python3 prep-tracker/server.py`). This directory holds only the code.
 
-## The test format
+Empty right now. The last sprint was merged into the main catalog; see the record at the bottom.
 
-| | |
-| --- | --- |
-| **Format** | 70 minutes · 4 problems · **no pausing** once started |
-| **Window** | Take it within 10 days of the invite |
-| **Setup** | Webcam + mic on the whole session, screen shared, latest Chrome or Firefox |
-| **Result** | Pass/fail only, no score detail. A retake is allowed after 6 months. |
-| **Topics** | 1D/2D arrays, hash maps, stacks, matrix traversal (spiral, row/col order), lists, graphs |
+## How a sprint runs
 
-## On the day
+1. Load the problem list into `prep-tracker/sprint.js` — its header documents the three constants,
+   and `prep-tracker/README.md` §7 has the walkthrough.
+2. Tag every problem `essential`, `stretch`, or `optional`. **A list that does not fit is the
+   normal case**, and the tag is what you cut.
+3. Solve into `sprint/<topic>/<problem>.py`, with the usual `NOTES:` block. Each row's panel in
+   the app prints the exact path, so there is nothing to decide mid-session.
+4. Mark each problem **Done**, **Stuck**, or **Skipped**, and write the trigger sentence while it
+   is fresh.
+5. After the test, merge the keepers into the catalog — `prep-tracker/README.md` §7 — and empty
+   `sprint.js` for next time.
 
-1. Run the platform's sample test first (5–10 exercises) so the editor holds no surprises.
-2. Order: **problems 1 and 2 first → skip to 4 → leave 3 for last.** Problem 3 is the longest.
-3. Use Python. You may switch languages between problems.
-4. Write clean, structured code. They grade the approach, not only the output.
-5. Run and submit as often as you want. There is no penalty.
-6. Print freely to debug.
-7. If you stall, skip and come back. Do not burn the clock on one problem.
-8. You may look up **syntax only**, in a new tab — not a new window. No full solutions.
+**Day numbers in the app are labels, not deadlines.** Nothing tracks a calendar, nothing turns
+red, and falling a day behind costs nothing.
 
-## The 9 groups
+## The rules that still apply
 
-The plan splits 39 problems into 9 named days. **They are labels, not deadlines.** Nothing in the
-app tracks a calendar, nothing turns red, and falling a day behind costs you nothing.
+The time-box protocol in `CLAUDE.md` does not relax because a real test is close. If anything it
+matters more:
 
-| Day | Topic | Folder |
-| --- | --- | --- |
-| 1 | Arrays (1D) Foundations | `sprint/arrays/` |
-| 2 | Strings & String Manipulation | `sprint/strings/` |
-| 3 | Two Pointers | `sprint/two_pointers/` |
-| 4 | Sliding Window | `sprint/sliding_window/` |
-| 5 | Matrix & Multidimensional Arrays | `sprint/matrix/` |
-| 6 | HashMaps & Sets | `sprint/hashmaps/` |
-| 7 | Greedy Strategies | `sprint/greedy/` |
-| 8 | Divide & Conquer + Recursion | `sprint/divide_conquer/` |
-| 9 | Full Timed Simulation | `sprint/simulation/` |
+- 60-minute hard cap on a first attempt. Past 50 minutes and still broken → read the solution,
+  close it, retype it from memory, grade **Failed**.
+- Never a second day on a first attempt.
+- At ~20 minutes with no approach, take the **pattern name only**. An unknown pattern cannot be
+  derived from first principles, so grinding on it returns nothing.
 
-Day 9 is a **mock run**, not a study day: pick Set A or Set B, set a 70-minute clock, use the
-order above, and grade the *run* rather than the problems.
+## Test-day tactics worth reusing
 
-## File convention
+Generic enough to survive to the next interview:
 
-```
-sprint/matrix/rotate_image.py
-```
+1. Run the platform's sample test first, so the editor holds no surprises.
+2. Do the short problems first and leave the longest for last. Read all of them before starting.
+3. Use your strongest language. Most platforms let you switch between problems.
+4. Write clean, structured code — the approach is usually graded, not only the output.
+5. Run and submit as often as allowed. Print freely to debug.
+6. If you stall, skip and come back. Do not burn the clock on one problem.
+7. State the time and space complexity in a comment above each solution. Cheap marks.
 
-Same as `patterns/`: the solution plus a `NOTES:` block. Each row's panel in the Sprint tab prints
-the exact path to use, so there is nothing to decide mid-session.
+**Before you submit anything**, the four checks that cost real time in the 2026-08 sprint:
 
-## Triage — read this before you feel behind
+1. Test with a parameter that **separates a constant's roles** — `k = 2` hid a bug that `k = 3`
+   exposed immediately.
+2. Run one edge case by hand: empty, size 1, `k > n`, all-equal, negatives.
+3. Never use a data value as a sentinel. `if nums[i] == 0` breaks when `0` is real data — use the
+   given lengths and indices.
+4. Apply a named fix and **re-run before writing anything new**.
 
-39 problems is more than the time available at a 60-minute-per-problem cap. **The list does not
-fit, by design.** The tag on every row says what to cut:
+One more, earned the hard way: when an index or count can exceed the data, ask whether the
+structure **wraps** (`% n`, as in a rotation) or **clamps** (`min`, as in fixed-size chunks). The
+two look identical and behave in opposite ways.
 
-- **essential** (20) — do these. Arrays, two pointers, matrix, hash maps, the core sliding-window
-  pair, binary search, sorting.
-- **stretch** (7) — do these when a day runs short.
-- **optional** (12) — the LeetCode Hards and most of the greedy day. Several sit above the test's
-  own stated topic list. Read them as reference and move on.
+## Record — 2026-08 sprint (merged)
 
-Skipping an optional is the plan working. Grinding a Hard on Day 2 while Day 5 matrix traversal
-goes untouched is the actual failure mode.
-
-The 60-minute cap and the "never a second day on a first attempt" rule from `CLAUDE.md` still
-apply. A deadline is a reason to hold the time-box harder, not to abandon it.
-
-## After the test
-
-The problems worth keeping get folded into the tracker's 100-problem catalog and join the
-spaced-repetition rotation. Steps are in `prep-tracker/README.md` §7.
+- A 70-minute, 4-problem assessment. Practice plan: 39 problems across 9 days.
+- 4 attempted: Running Sum (done), Merge Sorted Array, Rotate Array, Reverse String II (stuck).
+  The remaining 35 stayed reference reading — the triage working as intended.
+- The last session before the test was a pattern crash course, not new problems. The drill sheet
+  is `spaced-repetition-practice/crash_course.py` and is worth re-running before any interview.
+- Merged 2026-08-21: 10 problems already existed in the catalog, 29 were new, taking the roadmap
+  from 100 to 129. Added the `greedy` and `sorting` categories. 3 solutions moved into `patterns/`.
