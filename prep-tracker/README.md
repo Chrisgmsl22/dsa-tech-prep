@@ -51,10 +51,12 @@ An empty `{}` fixture will seed itself from the catalog on first load, exactly l
 ### Running the tests
 
 ```bash
-node --test prep-tracker/selection.test.js
+node --test prep-tracker/selection.test.js   # daily-window selection logic
+python3 prep-tracker/server_test.py          # persistence safety (22 cases)
 ```
 
-No install step — this uses Node's built-in test runner.
+No install step — Node's built-in test runner and the Python stdlib. The server test points a
+throwaway server at a tempfile, so it never touches your real progress.
 
 ---
 
@@ -123,7 +125,37 @@ Across the top:
   per-browser and per-machine, and is **not** written to the repo.
 - **Export progress** downloads a JSON backup (handy regardless of mode).
 - **Reset all** wipes every box, due date, and trigger note (with a confirm), then re-seeds the
-  solved problems and their staggered due dates.
+  solved problems and their staggered due dates. It deliberately **keeps** the Sprint checklist.
+
+### How writes are protected
+
+A 2026-08-21 review found several ways a page load could silently destroy history. The rules below
+are the fix. The governing principle: **when the stored data is in doubt, the app stops writing.**
+
+- **An empty or unparseable `progress.json` is an error, not "no progress yet."** The server answers
+  `409` and the app shows a red panel naming the file and the `git checkout` that restores it. It used
+  to report an empty file as `{}`, which made the app seed from scratch and immediately save over it —
+  measured at 63 entries with 15 notes becoming 60 with none, in one page load.
+- **Every write is revision-checked.** `GET /api/progress` returns an `ETag`; the app echoes it as
+  `If-Match` on save. If the file changed underneath (another tab, another machine, a `git pull`), the
+  server answers `409` and the app halts rather than reverting the newer work.
+- **Writes only come from this origin, as JSON.** A `text/plain` POST is a CORS-simple request, so
+  without this check any page open in the browser could erase the file with one `fetch()`.
+- **A reachable server that answers badly is not "offline."** Those were conflated, so a file with
+  merge-conflict markers told you to run `server.py` while it was already running — and a whole day of
+  grades went into a mirror that server mode never read back.
+- **The localStorage mirror is now read on load.** If this browser holds entries the file lacks, or
+  graded something more recently, the app halts and offers **Merge** (keep the newer of each) or
+  **Discard**. Previously the mirror was written on every save and never read, so the first save
+  after a server restart destroyed the only remaining copy.
+- **A refused localStorage write is surfaced**, not swallowed. Offline, that mirror is the only store.
+
+**After pulling these changes, restart the server and reload the page.** The client and server now
+speak a protocol the older versions do not: an old page against the new server gets `428` on every
+save, and a new page against the old server never sees an `ETag`.
+
+A 404 on `/api/progress` still means offline mode, so serving the directory with
+`python3 -m http.server` keeps working, exactly like `file://`.
 
 ---
 

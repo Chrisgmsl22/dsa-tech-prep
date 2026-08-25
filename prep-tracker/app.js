@@ -286,38 +286,137 @@ const API = "api/progress";
 let SERVER_MODE = false;
 let saveTimer = null;
 
+/* HALT states. Both mean "the stored data is in doubt", and while either is set
+ * the app renders an explanation and REFUSES TO WRITE. That refusal is the
+ * point: every verified way this app destroyed history ended with a well-meaning
+ * save over a file it had just misread. */
+let HALT = null;        // {title, detail} -- load failure, or this tab is stale
+let LOCAL_AHEAD = null; // {keys, mirror} -- this browser holds work the file lacks
+let REVISION = null;    // ETag of the progress file this tab loaded
+
+function isHalted() { return HALT !== null || LOCAL_AHEAD !== null; }
+
+/* The mirror is stored as {savedAt, state}. The old format was the bare state
+ * object, so a first load after this change still recognises it. */
 function loadLocal() {
   try {
-    return JSON.parse(localStorage.getItem(STORE_KEY)) || {};
+    const raw = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (!raw || typeof raw !== "object") return { savedAt: null, state: {} };
+    if (raw.state && typeof raw.state === "object") {
+      return { savedAt: raw.savedAt || null, state: raw.state };
+    }
+    return { savedAt: null, state: raw }; // legacy flat shape
   } catch (_) {
-    return {};
+    return { savedAt: null, state: {} };
   }
 }
 
+/* Keys where this browser holds a GRADE the server file lacks. The safety net
+ * for a lost write — a dead server, a dropped unload flush, a file restored from
+ * git behind the app's back. Without it the mirror was written on every save and
+ * never read, so the first save after a restart destroyed the only copy.
+ *
+ * Three guards, each closing a false positive that would cry wolf. A recovery
+ * prompt that fires when nothing was lost is worse than none: it trains you to
+ * dismiss the one that matters.
+ *
+ *  1. A mirror with no `savedAt` predates this format, so its age is unknown and
+ *     it cannot be shown to be newer than anything. It was never read before
+ *     this change either, so skipping it loses nothing.
+ *  2. `sprint#` keys are a separate namespace with no Leitner state and their own
+ *     lifecycle — the post-test merge DELETES them on purpose. Their absence
+ *     from the file is the intended end state, not a lost write.
+ *  3. A key the server lacks only counts if the mirror actually graded it
+ *     (`last` is set). An entry created by typing a note has no grade to lose.
+ */
+function mirrorAhead(mirrorBox, server) {
+  if (!mirrorBox.savedAt) return []; // guard 1: unknown age
+  const mirror = mirrorBox.state;
+  return Object.keys(mirror).filter((k) => {
+    if (isSprintKey(k)) return false; // guard 2: deleted on purpose by a merge
+    const m = mirror[k], s = server[k];
+    if (!m || typeof m !== "object") return false;
+    if (!s) return !!m.last; // guard 3: only a real grade counts as lost
+    return (m.last || "") > (s.last || "");
+  });
+}
+
 async function loadProgress() {
+  let r;
   try {
-    const r = await fetch(API, { cache: "no-store" });
-    if (r.ok) {
-      SERVER_MODE = true;
-      const data = await r.json();
-      return data && typeof data === "object" ? data : {};
-    }
+    r = await fetch(API, { cache: "no-store" });
   } catch (_) {
-    /* no server — fall through to offline mode */
+    // Genuinely no server: the file:// path. localStorage is the only store.
+    SERVER_MODE = false;
+    return loadLocal().state;
   }
-  SERVER_MODE = false;
-  return loadLocal();
+
+  // A REACHABLE server that answers badly is NOT "offline". Conflating the two
+  // told the user to run server.py while it was already running, and sent a
+  // whole day of grades into a mirror that server mode never reads back.
+  SERVER_MODE = true;
+  REVISION = r.headers.get("ETag");
+
+  // A 404 means this server does not implement persistence at all -- someone is
+  // serving the directory with `python3 -m http.server`, which is the same
+  // situation as file://. That is offline mode, not a broken file.
+  if (r.status === 404) {
+    SERVER_MODE = false;
+    REVISION = null;
+    return loadLocal().state;
+  }
+
+  if (!r.ok) {
+    let detail = `The server answered ${r.status}.`;
+    try {
+      const body = await r.json();
+      if (body && body.detail) detail = body.detail;
+    } catch (_) { /* keep the status-only message */ }
+    HALT = { title: "Could not read progress.json", detail };
+    return {};
+  }
+
+  let data;
+  try {
+    data = await r.json();
+  } catch (e) {
+    HALT = { title: "progress.json is not valid JSON", detail: String(e) };
+    return {};
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    HALT = { title: "progress.json is not an object", detail: "Refusing to seed over it." };
+    return {};
+  }
+
+  const mirrorBox = loadLocal();
+  const ahead = mirrorAhead(mirrorBox, data);
+  if (ahead.length) LOCAL_AHEAD = { keys: ahead, mirror: mirrorBox.state };
+  return data;
 }
 
 function postState() {
   saveTimer = null;
   return fetch(API, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "If-Match": REVISION || "*" },
     body: JSON.stringify(STATE),
   })
     .then((r) => {
+      // 409: the file moved under us — another tab, another machine, a git pull.
+      // Writing again would revert that newer work, so stop writing entirely.
+      if (r.status === 409) {
+        HALT = {
+          title: "This tab is out of date",
+          detail:
+            "progress.json changed since this tab loaded it, probably from another tab " +
+            "or a git pull. Saving now would revert that newer work. Export a backup, " +
+            "then reload.",
+        };
+        render();
+        return;
+      }
       if (!r.ok) throw new Error("HTTP " + r.status);
+      REVISION = r.headers.get("ETag") || REVISION;
       setFootNote(true);
     })
     // Previously `.catch(() => {})` — a dead server meant every grade looked
@@ -330,8 +429,17 @@ function postState() {
  * reload within 400ms loses the write — after which the next server-mode load
  * overwrites localStorage with the stale file and the grade is gone for good. */
 function saveState(opts) {
+  if (isHalted()) return; // never write while the stored data is in doubt
   // Always mirror locally so an offline reload still has the latest.
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); } catch (_) {}
+  try {
+    localStorage.setItem(
+      STORE_KEY,
+      JSON.stringify({ savedAt: new Date().toISOString(), state: STATE })
+    );
+  } catch (_) {
+    // Offline, localStorage IS the store, so a swallowed failure is total loss.
+    if (!SERVER_MODE) setFootNote(false, "storage");
+  }
   if (!SERVER_MODE) return;
   clearTimeout(saveTimer);
   if (opts && opts.immediate) {
@@ -341,16 +449,22 @@ function saveState(opts) {
   saveTimer = setTimeout(postState, 400);
 }
 
-/* A pending debounced write would be lost on reload/close. Flush it with
- * sendBeacon, which survives teardown where fetch does not. */
+/* A pending debounced write would be lost on reload/close. `keepalive` lets the
+ * request outlive the page. sendBeacon cannot be used any more: the revision
+ * check needs an If-Match header and beacons cannot set headers. If this flush
+ * is dropped anyway, mirrorAhead() catches it on the next load. */
 window.addEventListener("beforeunload", () => {
-  if (!SERVER_MODE || !saveTimer) return;
+  if (!SERVER_MODE || !saveTimer || isHalted()) return;
   clearTimeout(saveTimer);
   saveTimer = null;
-  navigator.sendBeacon(
-    API,
-    new Blob([JSON.stringify(STATE)], { type: "application/json" })
-  );
+  try {
+    fetch(API, {
+      method: "POST",
+      keepalive: true,
+      headers: { "Content-Type": "application/json", "If-Match": REVISION || "*" },
+      body: JSON.stringify(STATE),
+    });
+  } catch (_) { /* nothing left to try at teardown */ }
 });
 
 /* Seed any solved problem that has no progress yet: put it in box 2 with a
@@ -358,6 +472,7 @@ window.addEventListener("beforeunload", () => {
  * Idempotent — only touches problems missing an entry, so it also picks up
  * newly-added solved problems on later loads. */
 function seedIfNeeded() {
+  if (isHalted()) return; // a suspect load must never trigger a full reseed
   const solved = PROBLEMS.filter((p) => p.s).sort((a, b) => {
     const ca = CORE.has(a.cat) ? 0 : 1;
     const cb = CORE.has(b.cat) ? 0 : 1;
@@ -366,14 +481,23 @@ function seedIfNeeded() {
     return a.n - b.n;
   });
   const today = todayISO();
-  let seeded = false;
-  solved.forEach((p, i) => {
-    // Guard on box, NOT on presence. Typing a trigger note creates a box-0
-    // entry (see the "input" handler), so a presence check would permanently
-    // exclude any problem you'd jotted a note on before solving it — it would
-    // never get a due date and never enter the rotation.
+
+  // Guard on box, NOT on presence. Typing a trigger note creates a box-0
+  // entry (see the "input" handler), so a presence check would permanently
+  // exclude any problem you'd jotted a note on before solving it — it would
+  // never get a due date and never enter the rotation.
+  const toSeed = solved.filter((p) => {
+    const e = STATE[id(p)];
+    return !(e && e.box > 0);
+  });
+
+  // Stagger across the problems BEING SEEDED, not across every solved problem.
+  // Indexing into `solved` meant one new addition inherited its position in the
+  // whole list: a newly-solved `dp` problem came due 19 days out instead of
+  // today, so the app looked like it had ignored the solution. On a first run
+  // toSeed is everything, so the original spread is unchanged.
+  toSeed.forEach((p, i) => {
     const existing = STATE[id(p)];
-    if (existing && existing.box > 0) return;
     STATE[id(p)] = {
       box: 2,
       due: addDays(today, Math.floor(i / NEW_PER_DAY_SEED)),
@@ -381,9 +505,8 @@ function seedIfNeeded() {
       attempts: 0,
       trigger: (existing && existing.trigger) || "", // keep any note already written
     };
-    seeded = true;
   });
-  if (seeded) saveState({ immediate: true });
+  if (toSeed.length) saveState({ immediate: true });
 }
 
 /* ---------- app state ---------- */
@@ -418,6 +541,11 @@ const dueBadge = document.getElementById("dueBadge");
 const sprintBadge = document.getElementById("sprintBadge");
 
 function render() {
+  // A halted app must not draw lists as though the data were trustworthy.
+  if (isHalted()) {
+    renderHalt();
+    return;
+  }
   renderStats();
   renderFilter();
   renderList();
@@ -436,6 +564,72 @@ function render() {
       ta.setSelectionRange(ta.value.length, ta.value.length);
     }
   }
+}
+
+/* The halt panel replaces the whole list. There is deliberately no "continue
+ * anyway" button: every path that destroyed history did so by carrying on. */
+function renderHalt() {
+  filterEl.style.display = "none";
+  statsEl.innerHTML = "";
+  dueBadge.textContent = "0";
+  sprintBadge.textContent = "0";
+
+  if (LOCAL_AHEAD) {
+    const n = LOCAL_AHEAD.keys.length;
+    listEl.innerHTML =
+      `<div class="help halt">` +
+        `<h2>&#9888; This browser holds ${n} change${n === 1 ? "" : "s"} the repo file does not</h2>` +
+        `<p>Saving now would discard ${n === 1 ? "it" : "them"}, so writes are paused until you choose. ` +
+        `This usually means the server died, or the file was restored from git while a tab was open.</p>` +
+        `<p class="history">${LOCAL_AHEAD.keys.map(escapeHTML).join(", ")}</p>` +
+        `<div class="foot__actions">` +
+          `<button class="ghost" id="haltExport">Export a backup first</button>` +
+          `<button class="ghost" id="haltMerge">Merge — keep the newer of each</button>` +
+          `<button class="ghost danger" id="haltDiscard">Discard this browser&#39;s copy</button>` +
+        `</div>` +
+      `</div>`;
+    return;
+  }
+
+  listEl.innerHTML =
+    `<div class="help halt">` +
+      `<h2>&#9888; ${escapeHTML(HALT.title)}</h2>` +
+      `<p>${escapeHTML(HALT.detail)}</p>` +
+      `<p>Nothing will be written until this is resolved. That is deliberate — ` +
+      `saving over a file the app has misread is how history gets lost.</p>` +
+      `<div class="foot__actions">` +
+        `<button class="ghost" id="haltExport">Export what this tab has</button>` +
+        `<button class="ghost" id="haltReload">Reload</button>` +
+      `</div>` +
+    `</div>`;
+}
+
+/* "merge" keeps the mirror's entry for each diverged key; "discard" keeps the
+ * server's. Either way the save that follows rewrites the mirror from STATE, so
+ * the two are back in agreement. */
+function resolveLocalAhead(mode) {
+  const ahead = LOCAL_AHEAD;
+  LOCAL_AHEAD = null;
+  if (mode === "merge") {
+    for (const k of ahead.keys) STATE[k] = ahead.mirror[k];
+  }
+  saveState({ immediate: true });
+  render();
+}
+
+/* Shared by the footer button and the halt panel. Appending the anchor and
+ * revoking on the next tick matters: a detached anchor and a synchronous revoke
+ * both fail outside Chromium, and this is the app's only backup path — it sits
+ * directly beside Reset all. */
+function exportProgress() {
+  const blob = new Blob([JSON.stringify(STATE, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "dsa-prep-progress.json";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 0);
 }
 
 function renderStats() {
@@ -837,7 +1031,9 @@ function setSprintStatus(pid, status) {
 }
 
 function escapeHTML(s) {
-  return s.replace(/[&<>"]/g, (c) =>
+  // String() because this reads straight out of progress.json: one hand-edited
+  // `"trigger": 3` used to throw here and leave the whole list permanently blank.
+  return String(s ?? "").replace(/[&<>"]/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
   );
 }
@@ -913,6 +1109,11 @@ filterEl.addEventListener("click", (e) => {
 });
 
 listEl.addEventListener("click", (e) => {
+  // Halt-panel actions first: while halted, nothing else in the list is real.
+  if (e.target.id === "haltExport") { exportProgress(); return; }
+  if (e.target.id === "haltReload") { location.reload(); return; }
+  if (e.target.id === "haltMerge") { resolveLocalAhead("merge"); return; }
+  if (e.target.id === "haltDiscard") { resolveLocalAhead("discard"); return; }
   // window size toggle?
   if (e.target.id === "windowToggle") {
     SHOW_ALL = !SHOW_ALL;
@@ -1007,22 +1208,20 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   render();
 });
 
-document.getElementById("exportBtn").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(STATE, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "dsa-prep-progress.json";
-  a.click();
-  URL.revokeObjectURL(url);
-});
+document.getElementById("exportBtn").addEventListener("click", exportProgress);
 
 /* Footer status. `ok: false` means a POST to the repo file failed, which is
  * worth shouting about — it's the difference between "saved" and "only in this
  * browser". */
-function setFootNote(ok) {
+function setFootNote(ok, kind) {
   const note = document.querySelector(".foot__note");
   if (!note) return;
+  if (kind === "storage") {
+    note.className = "foot__note is-error";
+    note.textContent =
+      "⚠ This browser refused to save (storage full or blocked) — export now; nothing is being kept.";
+    return;
+  }
   if (!SERVER_MODE) {
     note.className = "foot__note is-warn";
     note.textContent =
