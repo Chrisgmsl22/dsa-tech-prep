@@ -185,11 +185,30 @@ Key facts about the tracker (full details in `prep-tracker/README.md`):
     `reviews/<category>/<problem_slug>/YYYY-MM-DD_<grade>.py`. Never overwrite past attempts —
     the dated history is the point. Always solve cold, then validate on LeetCode.
 
-**Daily window:** the Due list is capped at 5 problems (`WINDOW_SIZE` in
+**The daily plan (set 2026-08-24): 3 reps + 1 new problem when there is capacity.**
+
+The student's own framing, and it is the right one: *consistency is the weapon*. Three reps
+fit in ~35 minutes and get finished on a bad day; a new problem is a 60-minute commitment
+taken only when the time exists. A new problem that does not land gets graded **Failed** and
+rejoins the rotation tomorrow — that is a successful session, not a failed one.
+
+As mentor: **do not push for more reps.** The constraint is coverage, not retention. 69 of the
+129 problems are unstarted, including whole categories at zero (greedy, sorting). Having seen a
+pattern once beats having reviewed a known one five times — the 2026-08 sprint proved that,
+because it hurt where the pattern was unfamiliar, not where recall was weak.
+
+One thing to watch: 3 reps/day sustains roughly `3 × interval` problems, so ~9 at box 2 but ~63
+at box 4. There are 61 in rotation. **The plan only stays comfortable if problems climb to box
+3 and 4**, which means grading honestly upward. When an easy early problem comes back and they
+nail it in two minutes, that is **Fast**, not Clean. If everything sits at box 2 the queue
+refills and the growth slot disappears.
+
+**Daily window:** the Due list is capped at 3 problems (`WINDOW_SIZE` in
 `prep-tracker/selection.js`), filled from three interview-frequency tiers — tier 1
 (arrays/strings, hashmaps/sets, two pointers, sliding window, stacks), tier 2 (trees,
-binary search, linked lists, graphs), tier 3 (heaps, backtracking, DP) — at roughly
-50/35/15, so a 5-wide window lands at 2/2/1. Anything in box 1 or more than 30 days
+binary search, linked lists, graphs), tier 3 (heaps, backtracking, DP, greedy, sorting) — at
+roughly 50/35/15, so a 3-wide window lands at 2/1/0. Tier 3 surfaces via the urgency bypass or
+the backfill pass rather than a standing quota. Anything in box 1 or more than 30 days
 overdue jumps the window regardless of tier. The window auto-refills as problems are
 graded; `Show all` reveals the true backlog. It is a display filter only and never
 rewrites due dates.

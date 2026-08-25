@@ -23,7 +23,12 @@ const TIERS = {
 };
 
 const TIER_SHARE = { 1: 0.5, 2: 0.35, 3: 0.15 };
-const WINDOW_SIZE = 5;
+/* Three, not five. A rep costs ~10-15 min and a new problem up to 60, so a
+ * 5-rep day leaves no room to grow the list. Three fits in ~35 minutes, which
+ * means it gets finished -- and a queue you can empty is what gives you
+ * permission to open something new. Chosen 2026-08-24 with the daily plan
+ * "3 reps + 1 new problem when there is capacity". */
+const WINDOW_SIZE = 3;
 
 /* Distribute `total` whole slots across `shares` by the largest-remainder
  * method, so the quotas always sum to exactly `total`. Ties in the remainder

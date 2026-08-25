@@ -693,7 +693,11 @@ function renderFilter() {
 function visibleProblems() {
   let items = PROBLEMS.slice();
   if (VIEW === "due") items = items.filter(isDue);
-  else if (VIEW === "new") items = items.filter((p) => !p.s && prog(p).box === 0);
+  // Keep a problem visible in New after you grade it. The filter used to be
+  // box === 0 alone, so grading made the row disappear on the spot -- and the
+  // trigger-note prompt went with it, because FOCUS_TRIGGER had no open row to
+  // land in. That is the daily path now ("3 reps + 1 new"), so it has to hold.
+  else if (VIEW === "new") items = items.filter((p) => !p.s && (prog(p).box === 0 || isDoneToday(p)));
   // "all" => everything
   if (CAT_FILTER !== "all") items = items.filter((p) => p.cat === CAT_FILTER);
   return items;
@@ -757,7 +761,8 @@ function renderList() {
       : `<p class="empty">${emptyMessage()}</p>`;
 
     listEl.innerHTML =
-      windowNoteHTML(picked.length, candidates.length) + body + doneSectionHTML(done);
+      windowNoteHTML(picked.length, candidates.length) + body +
+      doneSectionHTML(done) + growSectionHTML();
     return;
   }
 
@@ -786,6 +791,74 @@ function renderList() {
       );
     })
     .join("");
+}
+
+/* One new problem to grow the list, chosen deliberately rather than at random.
+ *
+ * Order: interview-frequency tier first, then the category you have covered
+ * LEAST, then catalog order. Tier leads because coverage of a rare pattern is
+ * worth less than coverage of a common one -- greedy at 0/4 is a real gap, but
+ * it is tier 3, and a phone screen asks tier 1.
+ *
+ * Deterministic on purpose: no Math.random(), so it does not reshuffle while you
+ * are looking at it. It changes when you actually start something. */
+function suggestNewProblem() {
+  const unstarted = PROBLEMS.filter((p) => !p.s && prog(p).box === 0);
+  if (!unstarted.length) return null;
+
+  const started = {}, total = {};
+  for (const p of PROBLEMS) {
+    total[p.cat] = (total[p.cat] || 0) + 1;
+    if (p.s || prog(p).box >= 1) started[p.cat] = (started[p.cat] || 0) + 1;
+  }
+  // Ratio, not raw count: stacks at 4/5 is nearly done, hashmaps at 4/12 is not.
+  const coverage = (c) => (started[c] || 0) / total[c];
+
+  return unstarted.slice().sort((a, b) =>
+    tierOf(a.cat) - tierOf(b.cat) ||
+    coverage(a.cat) - coverage(b.cat) ||
+    catRank(a.cat) - catRank(b.cat) ||
+    a.n - b.n
+  )[0];
+}
+
+/* The growth half of the daily plan: 3 reps + 1 new problem when there is time.
+ * It lives in the Due view because the reps must not be the only thing on
+ * screen -- that makes growth the thing you have to remember, and it stops
+ * happening. Retention keeps what you have; this is what adds to it. */
+function growSectionHTML() {
+  // A filtered view is a focused drill, not the daily plan.
+  if (CAT_FILTER !== "all") return "";
+
+  // attempts === 1 means a first-ever attempt, so this fires only for a problem
+  // started today -- not for a rep of something already in rotation.
+  const startedToday = PROBLEMS.find((p) => isDoneToday(p) && prog(p).attempts === 1);
+  if (startedToday) {
+    return (
+      `<div class="group__head grow__head">` +
+        `<h2>+ Grow</h2>` +
+        `<span class="group__count">✓ you started something new today</span>` +
+      `</div>` +
+      `<p class="grow__hint">That is the growth half done. More is optional — ` +
+      `tomorrow's reps are what compound.</p>`
+    );
+  }
+
+  const p = suggestNewProblem();
+  if (!p) return `<div class="group__head grow__head"><h2>+ Grow</h2>` +
+                 `<span class="group__count">every problem started 🎉</span></div>`;
+
+  return (
+    `<div class="group__head grow__head">` +
+      `<h2>+ Grow — one new problem</h2>` +
+      `<span class="group__count">${CAT_META[p.cat].label} · your thinnest tier-${tierOf(p.cat)} category</span>` +
+    `</div>` +
+    rowHTML(p) +
+    `<p class="grow__hint">Give it the full 60-minute cap. If it does not land, grade it ` +
+    `<strong>Failed</strong> — it joins the rotation tomorrow like anything else, and that is a ` +
+    `finished session, not a failed one. Short on time? Skip it. The reps above are the part ` +
+    `that happens every day.</p>`
+  );
 }
 
 /* Problems graded today, kept on screen so the trigger sentence stays reachable
@@ -1087,7 +1160,7 @@ const HELP_HTML = `
     <li><span style="color:#4fe0c0">essential</span> = do it · <span style="color:#6c9cff">stretch</span> = if the day runs short · <span style="color:#3a4654">optional</span> = reference only. Skipping an optional is the plan working, not a failure.</li>
     <li><strong>Reset all</strong> does not touch the sprint.</li>
   </ul>
-  <p>After the test, the keepers get folded into the 100-problem catalog and join this rotation. See <em>Merging the sprint back in</em> in the README.</p>
+  <p>After the test, the keepers get folded into the main catalog and join this rotation. See <em>Merging the sprint back in</em> in the README.</p>
 
   <p style="color:#7f8c9b">Retention here stays at ~30–60 min/day. The sprint is the thing with a clock on it.</p>
 </div>`;

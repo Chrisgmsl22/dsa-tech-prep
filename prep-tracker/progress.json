@@ -2,203 +2,203 @@
   "arrays_and_strings#1": {
     "attempts": 1,
     "box": 3,
-    "due": "2026-07-23",
+    "due": "2026-09-02",
     "last": "2026-07-16",
     "trigger": ""
   },
   "arrays_and_strings#10": {
-    "attempts": 2,
-    "box": 1,
-    "due": "2026-08-11",
-    "last": "2026-08-10",
+    "attempts": 3,
+    "box": 4,
+    "due": "2026-09-14",
+    "last": "2026-08-24",
     "trigger": "Define boundaries, iterate per side, if matrix is not squared, need an additional constraint"
   },
   "arrays_and_strings#12": {
     "attempts": 1,
     "box": 2,
-    "due": "2026-08-24",
+    "due": "2026-08-29",
     "last": "2026-08-21",
     "trigger": "Accumulator, store state, use it in each new iteration, normal traversal"
   },
   "arrays_and_strings#13": {
     "attempts": 1,
     "box": 1,
-    "due": "2026-08-22",
+    "due": "2026-08-24",
     "last": "2026-08-21",
     "trigger": "Anything cyclic \u2014 rotate, shift, wrap, a circular buffer, a clock \u2014 normalize the step with % length before you do anything else.\nk %= n"
   },
   "arrays_and_strings#14": {
     "attempts": 1,
     "box": 1,
-    "due": "2026-08-22",
+    "due": "2026-08-24",
     "last": "2026-08-21",
     "trigger": "reverse 2 pointers, jump K steps in for loop, read the instructions"
   },
   "arrays_and_strings#2": {
     "attempts": 1,
     "box": 3,
-    "due": "2026-07-23",
+    "due": "2026-09-05",
     "last": "2026-07-16",
     "trigger": "2 strings, traversal through both, different sizes?, need the biggest one + guards to prevent overflow"
   },
   "arrays_and_strings#3": {
     "attempts": 1,
     "box": 3,
-    "due": "2026-07-29",
+    "due": "2026-09-08",
     "last": "2026-07-22",
     "trigger": ""
   },
   "arrays_and_strings#4": {
     "attempts": 1,
     "box": 3,
-    "due": "2026-07-29",
+    "due": "2026-09-09",
     "last": "2026-07-22",
     "trigger": ""
   },
   "arrays_and_strings#6": {
     "attempts": 2,
     "box": 2,
-    "due": "2026-07-30",
+    "due": "2026-08-26",
     "last": "2026-07-27",
     "trigger": ""
   },
   "arrays_and_strings#8": {
     "attempts": 4,
     "box": 3,
-    "due": "2026-08-11",
+    "due": "2026-09-10",
     "last": "2026-08-04",
     "trigger": "556y56y6"
   },
   "backtracking#1": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-22",
+    "due": "2026-08-28",
     "last": null,
     "trigger": ""
   },
   "backtracking#2": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-22",
+    "due": "2026-08-31",
     "last": null,
     "trigger": ""
   },
   "backtracking#3": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-23",
+    "due": "2026-09-04",
     "last": null,
     "trigger": ""
   },
   "backtracking#4": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-23",
+    "due": "2026-09-07",
     "last": null,
     "trigger": ""
   },
   "backtracking#5": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-23",
+    "due": "2026-09-09",
     "last": null,
     "trigger": ""
   },
   "binary_search#1": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-17",
+    "due": "2026-08-26",
     "last": null,
     "trigger": ""
   },
   "binary_search#2": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-17",
+    "due": "2026-08-30",
     "last": null,
     "trigger": ""
   },
   "binary_search#3": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-18",
+    "due": "2026-09-02",
     "last": null,
     "trigger": ""
   },
   "binary_search#8": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-18",
+    "due": "2026-09-06",
     "last": null,
     "trigger": ""
   },
   "dp#1": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-25",
+    "due": "2026-08-28",
     "last": null,
     "trigger": ""
   },
   "dp#2": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-25",
+    "due": "2026-09-01",
     "last": null,
     "trigger": ""
   },
   "dp#3": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-26",
+    "due": "2026-09-04",
     "last": null,
     "trigger": ""
   },
   "dp#4": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-26",
+    "due": "2026-09-07",
     "last": null,
     "trigger": ""
   },
   "dp#8": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-26",
+    "due": "2026-09-09",
     "last": null,
     "trigger": ""
   },
   "graphs#1": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-24",
+    "due": "2026-08-27",
     "last": null,
     "trigger": ""
   },
   "graphs#2": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-24",
+    "due": "2026-08-31",
     "last": null,
     "trigger": ""
   },
   "graphs#3": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-24",
+    "due": "2026-09-03",
     "last": null,
     "trigger": ""
   },
   "graphs#4": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-25",
+    "due": "2026-09-06",
     "last": null,
     "trigger": ""
   },
   "hashmaps_and_sets#1": {
     "attempts": 1,
     "box": 3,
-    "due": "2026-08-17",
+    "due": "2026-08-28",
     "last": "2026-08-10",
     "trigger": "Overkill is not always needed, compare both places, do we need to use a collector? (hashMap, set) or is a counter enough"
   },
@@ -226,175 +226,175 @@
   "heaps#1": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-21",
+    "due": "2026-08-27",
     "last": null,
     "trigger": ""
   },
   "heaps#2": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-21",
+    "due": "2026-08-31",
     "last": null,
     "trigger": ""
   },
   "heaps#3": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-21",
+    "due": "2026-09-03",
     "last": null,
     "trigger": ""
   },
   "heaps#4": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-22",
+    "due": "2026-09-07",
     "last": null,
     "trigger": ""
   },
   "linked_lists#1": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-16",
+    "due": "2026-08-26",
     "last": null,
     "trigger": ""
   },
   "linked_lists#2": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-16",
+    "due": "2026-08-30",
     "last": null,
     "trigger": ""
   },
   "linked_lists#3": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-16",
+    "due": "2026-09-02",
     "last": null,
     "trigger": ""
   },
   "linked_lists#4": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-17",
+    "due": "2026-09-05",
     "last": null,
     "trigger": ""
   },
   "sliding_window#1": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-13",
+    "due": "2026-08-25",
     "last": null,
     "trigger": ""
   },
   "sliding_window#2": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-13",
+    "due": "2026-08-29",
     "last": null,
     "trigger": ""
   },
   "sliding_window#3": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-13",
+    "due": "2026-09-01",
     "last": null,
     "trigger": ""
   },
   "sliding_window#4": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-14",
+    "due": "2026-09-04",
     "last": null,
     "trigger": ""
   },
   "sliding_window#5": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-14",
+    "due": "2026-09-08",
     "last": null,
     "trigger": ""
   },
   "stacks#1": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-14",
+    "due": "2026-08-25",
     "last": null,
     "trigger": ""
   },
   "stacks#2": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-15",
+    "due": "2026-08-29",
     "last": null,
     "trigger": ""
   },
   "stacks#3": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-15",
+    "due": "2026-09-01",
     "last": null,
     "trigger": ""
   },
   "stacks#4": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-15",
+    "due": "2026-09-05",
     "last": null,
     "trigger": ""
   },
   "trees#1": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-18",
+    "due": "2026-08-27",
     "last": null,
     "trigger": ""
   },
   "trees#2": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-19",
+    "due": "2026-08-30",
     "last": null,
     "trigger": ""
   },
   "trees#3": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-19",
+    "due": "2026-09-03",
     "last": null,
     "trigger": ""
   },
   "trees#4": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-19",
+    "due": "2026-09-06",
     "last": null,
     "trigger": ""
   },
   "trees#6": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-20",
+    "due": "2026-09-08",
     "last": null,
     "trigger": ""
   },
   "trees#7": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-20",
+    "due": "2026-09-10",
     "last": null,
     "trigger": ""
   },
   "trees#9": {
     "attempts": 0,
     "box": 2,
-    "due": "2026-07-20",
+    "due": "2026-09-10",
     "last": null,
     "trigger": ""
   },
   "two_pointers#1": {
     "attempts": 1,
     "box": 1,
-    "due": "2026-08-12",
+    "due": "2026-08-24",
     "last": "2026-08-11",
     "trigger": "2 Pointers, one at each side, compare ABS values, reverse an array"
   },
@@ -422,7 +422,7 @@
   "two_pointers#8": {
     "attempts": 1,
     "box": 1,
-    "due": "2026-08-22",
+    "due": "2026-08-25",
     "last": "2026-08-21",
     "trigger": "Use pointers, 0 spaces means unused, so lets use them wisely. What if you traversed from the end?"
   }

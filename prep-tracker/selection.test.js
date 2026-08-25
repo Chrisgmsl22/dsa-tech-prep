@@ -14,6 +14,27 @@ test("tier tables cover every category exactly once", () => {
   assert.strictEqual(new Set(all).size, CATEGORY_COUNT);
 });
 
+/* Policy test, not a correctness test. WINDOW_SIZE dropped from 5 to 3 on
+ * 2026-08-24, which changes the daily mix from 2/2/1 to 2/1/0 -- tier 3 (heaps,
+ * backtracking, dp, greedy, sorting) now only surfaces via the urgency bypass
+ * or the backfill pass. That is consistent with tier 3 being "differentiators
+ * you can be thin on", but it should fail loudly if the window moves again. */
+test("a 3-wide window splits 2 tier-1, 1 tier-2, 0 tier-3", () => {
+  assert.strictEqual(S.WINDOW_SIZE, 3);
+  assert.deepStrictEqual(S.largestRemainder(S.TIER_SHARE, 3), { 1: 2, 2: 1, 3: 0 });
+});
+
+test("a thin tier-1 supply backfills rather than shrinking the window", () => {
+  const pool = [
+    { key: "a", cat: "two_pointers", box: 3, daysUntil: 0 },   // tier 1, only one
+    { key: "b", cat: "trees", box: 3, daysUntil: -1 },
+    { key: "c", cat: "trees", box: 3, daysUntil: -2 },
+    { key: "d", cat: "dp", box: 3, daysUntil: -3 },
+  ];
+  const picked = S.selectWindow(pool, 3);
+  assert.strictEqual(picked.length, 3, "the freed tier-1 slot must be reused");
+});
+
 test("tier shares sum to 1", () => {
   const sum = S.TIER_SHARE[1] + S.TIER_SHARE[2] + S.TIER_SHARE[3];
   assert.ok(Math.abs(sum - 1) < 1e-9);

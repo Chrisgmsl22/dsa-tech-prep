@@ -63,7 +63,8 @@ throwaway server at a tempfile, so it never touches your real progress.
 ## 2. The daily loop (how to use it)
 
 1. **Open the app.** It lands on the **Due today** tab — the problems the schedule wants you
-   to revisit right now. On day one that's ~3 of your already-solved problems.
+   to revisit right now, capped at **3 a day**. Three reps fit in ~35 minutes, which means they
+   get finished; a queue you can empty is what gives you permission to open something new.
 2. **Pick the top one.** Weak buckets (red/amber) always sort to the top, so you face your
    shakiest problems first.
 3. **Solve it blind.** Open your editor, set a ~25-min timer, and write the solution *from
@@ -83,9 +84,12 @@ throwaway server at a tempfile, so it never touches your real progress.
 5. **Write the trigger sentence.** In the expanded panel, fill in *"what tips you off to the
    pattern?"* — e.g. *"sorted array + find a pair → two pointers from both ends."* This single
    sentence is the thing that transfers to problems you've never seen. It saves automatically.
-6. **Want more?** When Due today is empty, switch to the **New** tab and pull a fresh problem.
+6. **Then one new problem, if you have the hour.** Switch to the **New** tab and pull a fresh
+   one. Give it the full 60-minute cap; if it does not land, grade it **Failed** and it joins
+   the rotation tomorrow like anything else. That is a finished session, not a failed one.
+   Prefer categories you have never touched — coverage beats another rep on a pattern you know.
    Core categories (Arrays & Strings, Hashmaps & Sets, Two Pointers, Sliding Window) are
-   starred ★ — prioritize those.
+   starred ★.
 
 ---
 

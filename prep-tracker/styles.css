@@ -258,6 +258,15 @@ html, body {
 
 .grade.is-chosen { border-color: var(--active); background: #16202a; }
 
+/* ---------- grow section ---------- */
+.grow__head { margin-top: 30px; }
+.grow__head h2 { color: var(--box4); }
+.grow__head .group__count { color: var(--idle); }
+.grow__hint {
+  color: var(--muted); font-size: 11.5px; margin: 10px 2px 0; max-width: 68ch;
+}
+.grow__hint strong { color: var(--box1); }
+
 /* ---------- halt panel ---------- */
 /* Reuses .help, restyled to read as a stop sign rather than documentation. */
 .halt { border-color: var(--danger); background: #1a1214; }
