@@ -5,7 +5,10 @@ When to use which traversal method?
 
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent))
+# The tree helpers live beside the tree solutions, at patterns/trees/utils/.
+# This import was broken for months: the file used to sit in guides/ and
+# reached for a top-level utils/ that does not exist.
+sys.path.append(str(Path(__file__).resolve().parents[2] / "patterns" / "trees"))
 
 from utils.tree_builder import build_tree
 from utils.tree_node import TreeNode

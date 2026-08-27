@@ -11,12 +11,12 @@ The goal: a small, polished, **interactive web app** that lets the student *play
 
 ## 1. The playground is ONE mini-site (single dev server)
 
-The whole `playground/` directory is a single small web app served by **one** static
-server. `playground/index.html` is the **home page**: it lists every visualization, grouped
+The whole `apps/playground/` directory is a single small web app served by **one** static
+server. `apps/playground/index.html` is the **home page**: it lists every visualization, grouped
 by category, as searchable cards. You browse from the home into each visualization and back.
 
 ```
-playground/
+apps/playground/
   index.html                  # HOME — catalog of all visualizations
   home.css  home.js           # home page styling + logic
   playgrounds.json            # MANIFEST — the registry every viz must appear in
@@ -34,7 +34,7 @@ playground/
   - If it's a general concept, name it for the concept (e.g. `dfs_vs_bfs`, `quicksort_partition`).
 
 Example: visualizing `patterns/graphs/traverse_graph_using_dfs.py` →
-`playground/graphs/traverse_graph_using_dfs/`.
+`apps/playground/graphs/traverse_graph_using_dfs/`.
 
 ### Two things every new visualization MUST do
 
@@ -54,7 +54,7 @@ Example: visualizing `patterns/graphs/traverse_graph_using_dfs.py` →
    for it to `CATEGORY_META` in `home.js` (optional — it falls back gracefully).
 
 2. **Add a back-link** in the visualization's header pointing home: `../../index.html`
-   (two levels up, since the app lives at `playground/<category>/<slug>/`).
+   (two levels up, since the app lives at `apps/playground/<category>/<slug>/`).
 
 ---
 
@@ -182,5 +182,5 @@ Before calling it done:
 
 ## 8. Reference implementation
 
-`playground/graphs/traverse_graph_using_dfs/` is the canonical example of all of the above.
+`apps/playground/graphs/traverse_graph_using_dfs/` is the canonical example of all of the above.
 When in doubt, match its structure (frame generation, player, panels, theme).

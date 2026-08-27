@@ -271,14 +271,24 @@ for (const grp of SPRINT_GROUPS) SPRINT_GROUP_BY_N[grp.g] = grp;
 function sid(s) { return SPRINT_PREFIX + s.slug; }
 function sprog(s) { return STATE[sid(s)] || { status: null, trigger: "" }; }
 function isSprintKey(k) { return k.indexOf(SPRINT_PREFIX) === 0; }
+/* A sprint problem is a FIRST SOLVE that happened to come from an interview
+ * list, so its solution belongs in patterns/ like any other -- patterns/ is
+ * indexed by pattern, not by where the problem came from. There used to be a
+ * sprint/ staging directory here; it was never used once in 39 problems, and
+ * deleting it (2026-08-25) removed the "move the file" step from the merge.
+ *
+ * If the problem has a catalog twin, borrow its category. Otherwise fall back
+ * to the sprint group's folder name, which is close enough to pick by hand. */
 function sprintFilePath(s) {
-  return `sprint/${SPRINT_GROUP_BY_N[s.g].dir}/${s.slug.replace(/-/g, "_")}.py`;
+  const twin = s.maps ? PROBLEM_BY_ID[s.maps] : null;
+  const dir = twin ? twin.cat : SPRINT_GROUP_BY_N[s.g].dir;
+  return `patterns/${dir}/${s.slug.replace(/-/g, "_")}.py`;
 }
 
 /* ---------- persistence ----------
  * Two modes:
  *  - SERVER MODE: opened via server.py. Progress is read from and written back to
- *    prep-tracker/progress.json in this repo — the repo is the source of truth,
+ *    apps/prep-tracker/progress.json in this repo — the repo is the source of truth,
  *    so `git pull` on any machine resumes your progress. localStorage mirrors it as a cache.
  *  - OFFLINE MODE: opened via file:// (no server). Falls back to localStorage only.
  */
@@ -1117,7 +1127,7 @@ const SPRINT_EMPTY_HTML = `
   <p>This tab holds a <strong>one-off problem list</strong> that comes with a specific interview — a take-home plan, a screen's prep sheet, a recruiter's topic list. It is a checklist with memory: mark each problem <strong>Done</strong>, <strong>Stuck</strong>, or <strong>Skipped</strong>, and write the trigger sentence. Nothing here gets a box or a due date, so it never touches <strong>Due today</strong>.</p>
   <h3>To load the next one</h3>
   <ul>
-    <li>Open <code>prep-tracker/sprint.js</code> — the header documents all three constants.</li>
+    <li>Open <code>apps/prep-tracker/sprint.js</code> — the header documents all three constants.</li>
     <li>Fill in <code>SPRINT_META</code> (the test's shape), <code>SPRINT_GROUPS</code> (the day chunks), and <code>SPRINT</code> (the problems).</li>
     <li>Tag each problem <span style="color:#4fe0c0">essential</span>, <span style="color:#6c9cff">stretch</span>, or <span style="color:#3a4654">optional</span>. A list that does not fit is normal — the tag is what you cut.</li>
     <li>Reload. The tab wakes up.</li>
@@ -1302,7 +1312,7 @@ function setFootNote(ok, kind) {
   } else if (ok) {
     note.className = "foot__note";
     note.textContent =
-      "✓ Saving to prep-tracker/progress.json — commit it to sync across machines.";
+      "✓ Saving to apps/prep-tracker/progress.json — commit it to sync across machines.";
   } else {
     note.className = "foot__note is-error";
     note.textContent =

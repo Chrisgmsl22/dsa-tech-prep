@@ -89,7 +89,7 @@ Remember: I'm here to help you **learn to think** like a strong engineer, not to
 ## Visual Playground
 
 When I ask to "show me a visual example of how `<X>` works" (or to visualize/animate code),
-read `playground/PLAYGROUND_GUIDE.md` and follow it.
+read `apps/playground/PLAYGROUND_GUIDE.md` and follow it.
 
 ---
 
@@ -133,14 +133,26 @@ practice plan, which lived in the tracker's **Sprint** tab for 9 days.
     String II (all stuck). The other 35 stayed reference reading. **The triage held** — that was
     the plan working, not a shortfall.
 -   The final session before the test was a **pattern crash course**, not new problems. The drill
-    sheet is `spaced-repetition-practice/crash_course.py`: ~16 template stubs with specs, meant to
+    sheet is `fundamentals/crash_course.py`: ~16 template stubs with specs, meant to
     be filled in blind, 3 minutes each. Re-run it whenever an interview is close.
 -   On 2026-08-21 all 39 merged into the `PROBLEMS` catalog, so they now ride the normal review
     rotation. The catalog is **129 problems across 14 categories**, including two new ones:
     `greedy` (Greedy & Intervals) and `sorting`. Both sit in `TIERS` tier 3.
--   `prep-tracker/sprint.js` is now an **empty, reusable shell**. When the next interview brings a
+-   `apps/prep-tracker/sprint.js` is now an **empty, reusable shell**. When the next interview brings a
     problem list, fill in its 3 documented constants and the Sprint tab wakes up. See
-    `prep-tracker/README.md` §7.
+    `apps/prep-tracker/README.md` §7.
+
+**Test-day tactics, kept from the 2026-08 sprint** (the only part of `sprint/README.md` that was
+not already written down elsewhere; the folder was deleted 2026-08-25):
+
+1. Run the platform's sample test first, so the editor holds no surprises.
+2. Read all the problems before starting. Short ones first, longest last.
+3. Use the strongest language. Most platforms allow switching between problems.
+4. Write clean, structured code — the approach is usually graded, not only the output.
+5. Run and submit as often as allowed. Print freely to debug.
+6. If stalled, skip and come back. Do not burn the clock on one problem.
+7. State the time and space complexity in a comment above each solution. Cheap marks.
+8. Before submitting, run one edge case by hand: empty, size 1, `k > n`, all-equal, negatives.
 
 **Recurring failure modes worth naming as mentor** (all three cost real time this sprint):
 
@@ -158,23 +170,98 @@ practice plan, which lived in the tracker's **Sprint** tab for 9 days.
 -   **Covered so far**: grid representation, traversal (index-based + pythonic), directions array, bounds checking
 -   **Next up**: see the TODO in `grids_notes.md`
 
+### Weekly Study Plan (set 2026-08-24)
+
+Three tracks, not four. **LLD and "organic projects" are the same activity** — design a parking
+lot or an elevator with OOP, SOLID and a deliberately chosen pattern, written by hand. That
+collapse is what makes this fit: the Sunday session is restful *and* sits on the interview path.
+
+| Track | Lives | Why it gets that slot |
+| --- | --- | --- |
+| **DSA** | daily anchor, small | It is a schedule, not a subject. Skipping is what built the 54-problem backlog |
+| **System design** | most weeknights | Starting from zero, so the steepest return per hour |
+| **LLD / organic projects** | 2 weeknights + Sunday | Study midweek, build Sunday |
+
+| Day | 5:30–6:05 | 6:05–7:00 *(optional)* | 8:00–8:40 |
+| --- | --- | --- | --- |
+| Mon | 3 DSA reps | 1 new DSA problem | System design |
+| Tue | 3 DSA reps | 1 new DSA problem | LLD — study one pattern |
+| Wed | 3 DSA reps | 1 new DSA problem | System design |
+| Thu | 3 DSA reps | — | LLD — sketch Sunday's design |
+| Fri | 3 DSA reps | **System design at 6:05**, done by ~6:45 | — evening free |
+| Sat | **OFF** — family and friends. Not "off unless something comes up". Off. | | |
+| Sun | **LLD build, 1.5–2 hours** | | |
+
+**Three levels of a day.** Say this back to the student when they feel behind:
+
+- **Floor — 35 min.** 3 reps, nothing else. On a rough night this is a **win**. The streak survives.
+- **Standard — ~75 min.** 3 reps plus the evening block.
+- **Full — ~2 hours.** Adds the new problem. Three times a week, front-loaded Mon–Wed, because
+  energy declines across the week and a new problem is the most expensive task on the board.
+
+Roughly 9 hours a week including Sunday. The first draft implied 11 across 5 nights; the
+difference is the margin that keeps this alive past six weeks.
+
+**LLD cadence:** one pattern per week (Tue study → Thu sketch → Sun build), and every ~4 weeks one
+full LLD problem combining them. Not one pattern per month — that was too slow, and the student
+was right to push back.
+
+**Practice means producing an artifact.** For system design and LLD, reading an article or
+watching an AWS video is not practice — it is the same trap as re-reading a stuck solution instead
+of re-solving it blind. Every evening block should end with something written: a diagram, a class
+list, code. A bad one-page design beats a well-understood article.
+
+#### System design track — open, to be designed 2026-08-25
+
+The student's early thoughts, captured 2026-08-24. They will bring more detail next session.
+
+- They have **already read Alex Xu's System Design Interview** but got **almost no practice** from
+  it. A friend also sent YouTube tutorials and a list of sites (not yet named).
+- They want to **start from the basics** and build up.
+- Bonus they asked for: **map concepts to the well-known AWS services**, since AWS is what shows
+  up in the wild.
+- Their words: *"I want to have a balance between studying with writing vs simply copy pasting
+  terms, I want to understand them as well as put them to practice. That is why I am having some
+  trouble getting this idea to land."*
+
+**The diagnosis, for whoever picks this up:** the problem is **not a shortage of material**. They
+have a book, videos, and a site list already. What is missing is a **practice loop** — the same
+gap the tracker solved for DSA, where re-reading felt productive and retrieval was what actually
+worked.
+
+So do **not** answer this with another reading list or a curriculum. Answer it with a loop: what
+they produce each session, how it gets checked, and how it comes back later. Anchor it to the
+40-minute Mon/Wed/Fri block, and make every session end in a written artifact — a diagram, a
+capacity estimate, a one-page design, a service comparison in their own words. Copy-pasted terms
+are the failure mode they explicitly named.
+
+**As mentor, hold these three lines:**
+
+1. **Do not suggest adding more.** The plan is deliberately under capacity. If they are hitting
+   "full" five nights a week, say so — that is overdrawing, not dedication.
+2. **Saturday is not negotiable**, and Friday is meant to end early. Rest is what pays for the
+   other six days, not what is left over.
+3. **DSA is no longer the binding constraint; system design is.** 3 new problems a week means the
+   68 unstarted problems take ~5 months, and that is the correct trade. If an interview gets
+   scheduled, flip the ratio for those weeks and say so explicitly.
+
 ### Prep Tracker & Practice Workflow
 
 The student practices with a **three-pane setup**: the Prep Tracker web app, a code editor, and
 Claude (me) as the mentor. The loop:
 
-1.  The app (`prep-tracker/`) shows what's **due** for spaced-repetition review.
+1.  The app (`apps/prep-tracker/`) shows what's **due** for spaced-repetition review.
 2.  The student solves the problem **blind** in their editor.
 3.  They **grade** themselves in the app (Failed/Slow/Clean/Fast → Leitner box → next review date).
 4.  They come to **me for feedback, hints, and understanding** — never for the solution.
 
-Key facts about the tracker (full details in `prep-tracker/README.md`):
+Key facts about the tracker (full details in `apps/prep-tracker/README.md`):
 
 -   Runs on active recall + spaced repetition over the AlgoMap 100 roadmap.
--   `python3 prep-tracker/server.py` serves the app **and** persists progress to
-    `prep-tracker/progress.json` — **the repo is the source of truth**, so progress syncs across
+-   `python3 apps/prep-tracker/server.py` serves the app **and** persists progress to
+    `apps/prep-tracker/progress.json` — **the repo is the source of truth**, so progress syncs across
     machines via git. (Opened via `file://` it falls back to browser localStorage only.)
--   The problem catalog + solved flags live in the `PROBLEMS` array in `prep-tracker/app.js`.
+-   The problem catalog + solved flags live in the `PROBLEMS` array in `apps/prep-tracker/app.js`.
     **When the student solves a new problem and adds its file under `patterns/`, flip that
     entry's `s` to `true` and set its `f` path** so it joins the review rotation.
 
@@ -204,7 +291,7 @@ nail it in two minutes, that is **Fast**, not Clean. If everything sits at box 2
 refills and the growth slot disappears.
 
 **Daily window:** the Due list is capped at 3 problems (`WINDOW_SIZE` in
-`prep-tracker/selection.js`), filled from three interview-frequency tiers — tier 1
+`apps/prep-tracker/selection.js`), filled from three interview-frequency tiers — tier 1
 (arrays/strings, hashmaps/sets, two pointers, sliding window, stacks), tier 2 (trees,
 binary search, linked lists, graphs), tier 3 (heaps, backtracking, DP, greedy, sorting) — at
 roughly 50/35/15, so a 3-wide window lands at 2/1/0. Tier 3 surfaces via the urgency bypass or
@@ -257,5 +344,5 @@ solution even when asked directly; offer the next hint instead.
 -   At the start of each session, check this section and `patterns/<topic>/<topic>_notes.md` for where we left off
 -   When the student says to persist/save progress, update both this file and the relevant notes file
 -   When a category is finished, mark it Completed above and update Current Focus
--   Tracker progress lives in `prep-tracker/progress.json` (committed); the student's day-to-day
+-   Tracker progress lives in `apps/prep-tracker/progress.json` (committed); the student's day-to-day
     review state is there, not in this file

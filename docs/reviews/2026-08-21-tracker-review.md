@@ -1,6 +1,6 @@
 # Prep Tracker — architecture & safety review
 
-**Date:** 2026-08-21 · **Baseline:** commit `19f81ed` · **Scope:** `prep-tracker/` (1851 lines)
+**Date:** 2026-08-21 · **Baseline:** commit `19f81ed` · **Scope:** `apps/prep-tracker/` (1851 lines)
 
 Four independent reviewers, each blind to the others: structure, data safety, testability, rendering.
 Findings below are **deduplicated** and **re-ranked** across all four. Every claim marked *verified*
@@ -10,7 +10,7 @@ was reproduced by execution or measurement. Two reviewer claims were rejected �
 
 ## Status
 
-**Tier 0 and finding 8 are DONE** (2026-08-21). Verified by `prep-tracker/server_test.py` (22/22) and
+**Tier 0 and finding 8 are DONE** (2026-08-21). Verified by `apps/prep-tracker/server_test.py` (22/22) and
 a browser pass on an isolated origin:
 
 - an empty / conflict-markered / scalar `progress.json` now returns 409, and the app halts instead of

@@ -1,4 +1,4 @@
-"""Safety tests for server.py -- run with: python3 prep-tracker/server_test.py
+"""Safety tests for server.py -- run with: python3 apps/prep-tracker/server_test.py
 
 Every case here corresponds to a path that was verified, on 2026-08-21, to
 destroy practice history. They are regression guards, not hypotheticals.
@@ -7,7 +7,11 @@ under test is pointed at a tempfile via PREP_PROGRESS.
 """
 import http.client, json, os, socket, subprocess, sys, tempfile, threading, time
 
-REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Layout-independent on purpose: this used to derive the repo root by walking
+# up two directories, which broke the moment the app moved into apps/.
+# The server is simply the sibling file.
+HERE = os.path.dirname(os.path.abspath(__file__))
+SERVER = os.path.join(HERE, "server.py")
 
 def free_port():
     with socket.socket() as s:
@@ -19,7 +23,7 @@ TMP = tempfile.mkdtemp()
 PROGRESS = os.path.join(TMP, "progress.json")
 
 env = dict(os.environ, PREP_PROGRESS=PROGRESS, PORT=str(PORT))
-proc = subprocess.Popen([sys.executable, "prep-tracker/server.py"], cwd=REPO, env=env,
+proc = subprocess.Popen([sys.executable, SERVER], cwd=HERE, env=env,
                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def wait_up():

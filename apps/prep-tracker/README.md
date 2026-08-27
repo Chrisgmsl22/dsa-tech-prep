@@ -19,18 +19,18 @@ new ones (growth), at a sustainable ~30–60 min/day.
 **Recommended — run the server** (so the repo is your source of truth):
 
 ```bash
-python3 prep-tracker/server.py        # then open http://localhost:8000/
-# custom port:  PORT=8137 python3 prep-tracker/server.py
+python3 apps/prep-tracker/server.py        # then open http://localhost:8000/
+# custom port:  PORT=8137 python3 apps/prep-tracker/server.py
 ```
 
-The server serves the app **and** saves your progress to `prep-tracker/progress.json` in this
+The server serves the app **and** saves your progress to `apps/prep-tracker/progress.json` in this
 repo. Commit that file and your progress follows you to any machine via `git pull`. No build
 step, no `npm install`, no dependencies — just Python 3.
 
 **Offline fallback** — you can also open the file directly:
 
 ```bash
-open prep-tracker/index.html          # macOS
+open apps/prep-tracker/index.html          # macOS
 ```
 
 Opened this way (no server), progress saves only to the browser's `localStorage` and is **not**
@@ -41,7 +41,7 @@ without touching your real history:
 
 ```bash
 echo '{}' > /tmp/fixture.json
-PREP_PROGRESS=/tmp/fixture.json PORT=8137 python3 prep-tracker/server.py
+PREP_PROGRESS=/tmp/fixture.json PORT=8137 python3 apps/prep-tracker/server.py
 ```
 
 Use a different port as well as a different file. `localStorage` is scoped per origin, so
@@ -51,8 +51,8 @@ An empty `{}` fixture will seed itself from the catalog on first load, exactly l
 ### Running the tests
 
 ```bash
-node --test prep-tracker/selection.test.js   # daily-window selection logic
-python3 prep-tracker/server_test.py          # persistence safety (22 cases)
+node --test apps/prep-tracker/selection.test.js   # daily-window selection logic
+python3 apps/prep-tracker/server_test.py          # persistence safety (22 cases)
 ```
 
 No install step — Node's built-in test runner and the Python stdlib. The server test points a
@@ -122,7 +122,7 @@ Across the top:
 
 ## 5. Where your progress lives
 
-- **With the server (recommended):** progress is written to `prep-tracker/progress.json`, a
+- **With the server (recommended):** progress is written to `apps/prep-tracker/progress.json`, a
   committed file. This is the **source of truth** — commit it and `git pull` on any machine to
   resume. localStorage is kept as a local cache/mirror.
 - **Offline (`file://`):** progress lives only in the browser's `localStorage` (key `srt.v1`),
@@ -204,12 +204,13 @@ It is a **checklist with memory, not a second scheduler**:
 
 ### Loading the next sprint
 
-Edit `prep-tracker/sprint.js` and reload. Nothing else changes.
+Edit `apps/prep-tracker/sprint.js` and reload. Nothing else changes.
 
 1. `SPRINT_META` — `{ format, order }`. Free text for the header strip, e.g.
    `"70 minutes · 4 problems · no pausing"`.
 2. `SPRINT_GROUPS` — one row per chunk: `{ g: 1, dir: "arrays", label: "Arrays (1D) Foundations" }`.
-   `g` orders the groups and renders as the day number. `dir` is the folder under `sprint/`.
+   `g` orders the groups and renders as the day number. `dir` names the group's topic and is
+   used to guess a `patterns/` folder when a problem has no catalog twin.
 3. `SPRINT` — one row per problem:
 
 ```js
@@ -226,14 +227,16 @@ mechanical.
 `essential` = do it, `stretch` = if the day runs short, `optional` = reference only. Skipping an
 optional is the plan working.
 
-Solutions go in `sprint/<topic>/<problem>.py`. Each row's panel prints the exact path.
+Solutions go in `patterns/<category>/<problem>.py` — the same place as any other first solve.
+There is no staging directory: `patterns/` is indexed by *pattern*, not by which interview sent
+you there. Each row's panel prints the suggested path.
 
 ### Merging a finished sprint back in
 
 Once the test is done, fold the keepers into the catalog so they join the review rotation. For each:
 
-1. Move the file from `sprint/<topic>/` into `patterns/<category>/`. **Run it first** — only mark
-   a problem solved if it actually passes.
+1. **Run the solution first** — only mark a problem solved if it actually passes. The file is
+   already in `patterns/`, so there is nothing to move.
 2. If it has a `maps` twin, flip that `PROBLEMS` entry to `s: true` and set its `f` path.
    Otherwise add a new `PROBLEMS` entry with the next free `n` for its category.
 3. Carry the note across: `progress.json`'s `"sprint#<slug>".trigger` → the new `"cat#n".trigger`.

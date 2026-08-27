@@ -6,8 +6,8 @@ so the repo is the source of truth for what you've practiced. Commit progress.js
 and `git pull` on any machine to resume exactly where you left off.
 
 Run:
-    python3 prep-tracker/server.py          # http://localhost:8000/
-    PORT=8137 python3 prep-tracker/server.py # custom port
+    python3 apps/prep-tracker/server.py          # http://localhost:8000/
+    PORT=8137 python3 apps/prep-tracker/server.py # custom port
 
 Endpoints:
     GET  /                -> the app (index.html)
@@ -42,7 +42,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # PREP_PROGRESS points the server at a different progress file, so you can run
 # the app against fixture data without touching your real history:
 #
-#     PREP_PROGRESS=/tmp/fixture.json PORT=8137 python3 prep-tracker/server.py
+#     PREP_PROGRESS=/tmp/fixture.json PORT=8137 python3 apps/prep-tracker/server.py
 #
 # Use a different PORT too -- localStorage is per-origin, so :8137 also gets its
 # own mirror and the sandbox is fully isolated.
@@ -112,7 +112,7 @@ class Handler(SimpleHTTPRequestHandler):
                 "detail": f"{PROGRESS} exists but is empty. Refusing to report it as "
                           "'no progress', because the app would seed from scratch and "
                           "save over it. Restore it with: git checkout -- "
-                          "prep-tracker/progress.json",
+                          "apps/prep-tracker/progress.json",
             })
             return
 
@@ -123,7 +123,7 @@ class Handler(SimpleHTTPRequestHandler):
                 "error": "unparseable",
                 "detail": f"{PROGRESS} is not valid JSON ({e}). If you just merged, it may "
                           "still contain conflict markers. Fix the file, or restore it with: "
-                          "git checkout -- prep-tracker/progress.json",
+                          "git checkout -- apps/prep-tracker/progress.json",
             })
             return
 

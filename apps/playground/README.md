@@ -26,11 +26,11 @@ play it; use the **← Playground** link to come back.
 ## Add a new visualization
 
 Easiest: ask Claude — *"show me a visual example of how `<X>` works."* It follows
-[`PLAYGROUND_GUIDE.md`](./PLAYGROUND_GUIDE.md): creates `playground/<category>/<name>/`, builds
+[`PLAYGROUND_GUIDE.md`](./PLAYGROUND_GUIDE.md): creates `apps/playground/<category>/<name>/`, builds
 the app, and registers it in `playgrounds.json` so it shows up on the home page automatically.
 
 Manually, you'd:
-1. Add `playground/<category>/<name>/` with `index.html`, `styles.css`, `app.js`.
+1. Add `apps/playground/<category>/<name>/` with `index.html`, `styles.css`, `app.js`.
 2. Add an entry to `playgrounds.json`.
 3. (Refresh the home page — no rebuild needed.)
 
