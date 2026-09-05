@@ -170,27 +170,36 @@ not already written down elsewhere; the folder was deleted 2026-08-25):
 -   **Covered so far**: grid representation, traversal (index-based + pythonic), directions array, bounds checking
 -   **Next up**: see the TODO in `grids_notes.md`
 
-### Weekly Study Plan (set 2026-08-24)
+### Weekly Study Plan (set 2026-09-04)
 
-Three tracks, not four. **LLD and "organic projects" are the same activity** — design a parking
-lot or an elevator with OOP, SOLID and a deliberately chosen pattern, written by hand. That
-collapse is what makes this fit: the Sunday session is restful *and* sits on the interview path.
+**Times changed 2026-09-04.** The 2026-08-24 plan was paused for an SRE interview (2026-09-03,
+now finished). This version restarts it with the student's current hours.
+
+Three tracks, not four. **LLD and "organic projects" are the same activity** — build the smallest
+thing that forces one pattern, by hand, in Python. That collapse is what makes this fit.
 
 | Track | Lives | Why it gets that slot |
 | --- | --- | --- |
-| **DSA** | daily anchor, small | It is a schedule, not a subject. Skipping is what built the 54-problem backlog |
-| **System design** | most weeknights | Starting from zero, so the steepest return per hour |
-| **LLD / organic projects** | 2 weeknights + Sunday | Study midweek, build Sunday |
+| **DSA** | daily anchor, small | It is a schedule, not a subject. Skipping is what built the backlog |
+| **System design** | Mon, Wed, Fri | Newest track, so the steepest return per hour |
+| **LLD / organic projects** | Tue, Thu + Sunday | Study midweek, build Sunday |
 
-| Day | 5:30–6:05 | 6:05–7:00 *(optional)* | 8:00–8:40 |
-| --- | --- | --- | --- |
-| Mon | 3 DSA reps | 1 new DSA problem | System design |
-| Tue | 3 DSA reps | 1 new DSA problem | LLD — study one pattern |
-| Wed | 3 DSA reps | 1 new DSA problem | System design |
-| Thu | 3 DSA reps | — | LLD — sketch Sunday's design |
-| Fri | 3 DSA reps | **System design at 6:05**, done by ~6:45 | — evening free |
-| Sat | **OFF** — family and friends. Not "off unless something comes up". Off. | | |
-| Sun | **LLD build, 1.5–2 hours** | | |
+| Day | 17:00–18:00 | 18:00–19:00 *(optional)* | 19:00–20:00 | 20:00–20:40 |
+| --- | --- | --- | --- | --- |
+| Mon | 3 DSA reps | 1 new DSA problem | dinner | **System design — attempt** |
+| Tue | 3 DSA reps | 1 new DSA problem | dinner | **LLD — study one pattern** |
+| Wed | 3 DSA reps | 1 new DSA problem | dinner | **System design — check** |
+| Thu | 3 DSA reps | — | dinner | **LLD — sketch Sunday's build** |
+| Fri | 3 DSA reps | **System design — close one gap** | dinner | — evening free |
+| Sat | **OFF** — family and friends. Not "off unless something comes up". Off. | | | |
+| Sun | **LLD build, 1.5–2 hours** | | | |
+
+Roughly 9–10 hours a week. An 11-hour version was drafted twice and rejected twice — the
+difference is the margin that keeps this alive past six weeks.
+
+> **17:00–18:00 is a window, not a quota.** The work is **3 reps**, which takes 35–45 minutes.
+> If the student finishes at 17:40, they stop. The slot grew from 35 to 60 minutes on 2026-09-04,
+> and filling it is how 9 hours becomes 12.
 
 **Three levels of a day.** Say this back to the student when they feel behind:
 
@@ -199,51 +208,37 @@ collapse is what makes this fit: the Sunday session is restful *and* sits on the
 - **Full — ~2 hours.** Adds the new problem. Three times a week, front-loaded Mon–Wed, because
   energy declines across the week and a new problem is the most expensive task on the board.
 
-Roughly 9 hours a week including Sunday. The first draft implied 11 across 5 nights; the
-difference is the margin that keeps this alive past six weeks.
-
 **LLD cadence:** one pattern per week (Tue study → Thu sketch → Sun build), and every ~4 weeks one
-full LLD problem combining them. Not one pattern per month — that was too slow, and the student
-was right to push back.
+full LLD problem combining them.
 
 **Practice means producing an artifact.** For system design and LLD, reading an article or
-watching an AWS video is not practice — it is the same trap as re-reading a stuck solution instead
-of re-solving it blind. Every evening block should end with something written: a diagram, a class
-list, code. A bad one-page design beats a well-understood article.
+watching a video is not practice — it is the same trap as re-reading a stuck solution instead of
+re-solving it blind. Every evening block ends with something written: a diagram, a class list,
+code. A bad one-page design beats a well-understood article.
 
-#### System design track — open, to be designed 2026-08-25
+#### System design track — DEFINED 2026-09-04. No longer open.
 
-The student's early thoughts, captured 2026-08-24. They will bring more detail next session.
+**It lives in a different repo:** `~/Dev/casual-personal/learning-swe-fundamentals`
+(renamed from `cloud-fundamentals`). Its `SCHEDULE.md` and `system-design/FRAMEWORK.md` hold the
+detail. **This file keeps its own copy of the table above, so update both when times change.**
 
-- They have **already read Alex Xu's System Design Interview** but got **almost no practice** from
-  it. A friend also sent YouTube tutorials and a list of sites (not yet named).
-- They want to **start from the basics** and build up.
-- Bonus they asked for: **map concepts to the well-known AWS services**, since AWS is what shows
-  up in the wild.
-- Their words: *"I want to have a balance between studying with writing vs simply copy pasting
-  terms, I want to understand them as well as put them to practice. That is why I am having some
-  trouble getting this idea to land."*
+The earlier diagnosis was right and was followed: the problem was never a shortage of material —
+the student has Alex Xu's book, videos and a site list. What was missing was a **practice loop**.
+So the answer is not a curriculum. It is this:
 
-**The diagnosis, for whoever picks this up:** the problem is **not a shortage of material**. They
-have a book, videos, and a site list already. What is missing is a **practice loop** — the same
-gap the tracker solved for DSA, where re-reading felt productive and retrieval was what actually
-worked.
+| Session | Produces | Checked by | Comes back as |
+| --- | --- | --- | --- |
+| **Mon** — attempt, timed and blind | `attempt.md` + sketch | Wednesday's reference and sweep | a blind re-draw, 3+ weeks later |
+| **Wed** — check | `gaps.md` | — | Friday's concept |
+| **Fri** — close one gap | a note in `concepts/` | the next design that needs it | — |
 
-So do **not** answer this with another reading list or a curriculum. Answer it with a loop: what
-they produce each session, how it gets checked, and how it comes back later. Anchor it to the
-40-minute Mon/Wed/Fri block, and make every session end in a written artifact — a diagram, a
-capacity estimate, a one-page design, a service comparison in their own words. Copy-pasted terms
-are the failure mode they explicitly named.
+**`gaps.md` is the curriculum.** The student never studies a concept they have not already
+needed, so it is ordered by real need and cannot overwhelm them. **Never answer a gap with a
+reading list.**
 
-**As mentor, hold these three lines:**
+**As mentor, if system design comes up in a DSA session:** do not teach it here. Point at the
+other repo and its Monday slot. Mixing the two is how the DSA hour gets eaten.
 
-1. **Do not suggest adding more.** The plan is deliberately under capacity. If they are hitting
-   "full" five nights a week, say so — that is overdrawing, not dedication.
-2. **Saturday is not negotiable**, and Friday is meant to end early. Rest is what pays for the
-   other six days, not what is left over.
-3. **DSA is no longer the binding constraint; system design is.** 3 new problems a week means the
-   68 unstarted problems take ~5 months, and that is the correct trade. If an interview gets
-   scheduled, flip the ratio for those weeks and say so explicitly.
 
 ### Prep Tracker & Practice Workflow
 
