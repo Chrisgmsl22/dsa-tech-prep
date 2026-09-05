@@ -162,6 +162,26 @@ not already written down elsewhere; the folder was deleted 2026-08-25):
     submitted without, twice.
 3.  Using a data value as a sentinel (`if nums[i] == 0`) instead of the given lengths.
 
+### Completed: SRE interview (2026-09-03)
+
+A 4-round assessment — behavioral (STAR), an architectural case, hands-on IaC, and a
+concept-focused Q&A. **DSA was paused for that week**, which is why the streak has a gap around
+2026-08-27 to 09-03. That was the correct trade, not a lapse.
+
+The prep built a full cloud and DevOps foundation in the other repo: networking and CIDR,
+Terraform, CloudFormation, Ansible, Docker, file permissions, and 8 STAR stories.
+**Roughly 13 of the 30 core system design concepts are now covered.**
+
+What the rounds actually asked: monitoring, logs, metrics, dashboards, alerts, error mitigation,
+cloud infrastructure, replication, load balancing, API baselines, Docker build times, and "this
+system is slow — what do you do?".
+
+**The student is not aiming to be an SRE.** They want to be an engineer who has worked from the
+start of an application: architecture, frontend, backend, microservices, infrastructure, cloud,
+CI/CD, deploy, automation, AI tooling, and programming fundamentals. **So: ops at fundamentals
+depth, not SRE depth.** That knowledge is what makes a design answer concrete instead of
+hand-wavy, and it is the part most fullstack engineers lack.
+
 ### Current Focus: Grids
 
 -   Learning grids as a bridge between backtracking and graphs
@@ -215,6 +235,17 @@ full LLD problem combining them.
 watching a video is not practice — it is the same trap as re-reading a stuck solution instead of
 re-solving it blind. Every evening block ends with something written: a diagram, a class list,
 code. A bad one-page design beats a well-understood article.
+
+**As mentor, hold these three lines:**
+
+1. **Do not suggest adding more.** The plan is deliberately under capacity. If the student is
+   hitting "Full" five nights a week, say so — that is overdrawing, not dedication.
+2. **Saturday is not negotiable**, and Friday is meant to end early. Rest is what pays for the
+   other six days, not what is left over.
+3. **DSA is no longer the binding constraint; system design is.** 3 new problems a week means the
+   68 unstarted problems take ~5 months, and that is the correct trade. If an interview gets
+   scheduled, flip the ratio for those weeks and say so explicitly — that is exactly what happened
+   for the 2026-09-03 SRE interview, and it worked.
 
 #### System design track — DEFINED 2026-09-04. No longer open.
 
