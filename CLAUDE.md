@@ -202,17 +202,17 @@ thing that forces one pattern, by hand, in Python. That collapse is what makes t
 | --- | --- | --- |
 | **DSA** | daily anchor, small | It is a schedule, not a subject. Skipping is what built the backlog |
 | **System design** | Mon, Wed, Fri | Newest track, so the steepest return per hour |
-| **LLD / organic projects** | Tue, Thu + Sunday | Study midweek, build Sunday |
+| **LLD / organic projects** | Tue, Thu + Sunday | Two queues, no day depends on another |
 
 | Day | 17:00–18:00 | 18:00–19:00 *(optional)* | 19:00–20:00 | 20:00–20:40 |
 | --- | --- | --- | --- | --- |
 | Mon | 3 DSA reps | 1 new DSA problem | dinner | **System design — attempt** |
-| Tue | 3 DSA reps | 1 new DSA problem | dinner | **LLD — study one pattern** |
+| Tue | 3 DSA reps | 1 new DSA problem | dinner | **LLD — next pattern in the queue** |
 | Wed | 3 DSA reps | 1 new DSA problem | dinner | **System design — check** |
-| Thu | 3 DSA reps | — | dinner | **LLD — sketch Sunday's build** |
+| Thu | 3 DSA reps | — | dinner | **LLD — next pattern in the queue** |
 | Fri | 3 DSA reps | **System design — close one gap** | dinner | — evening free |
 | Sat | **OFF** — family and friends. Not "off unless something comes up". Off. | | | |
-| Sun | **LLD build, 1.5–2 hours** | | | |
+| Sun | **LLD problem build, 1.5–2 hours** | | | |
 
 Roughly 9–10 hours a week. An 11-hour version was drafted twice and rejected twice — the
 difference is the margin that keeps this alive past six weeks.
@@ -228,8 +228,57 @@ difference is the margin that keeps this alive past six weeks.
 - **Full — ~2 hours.** Adds the new problem. Three times a week, front-loaded Mon–Wed, because
   energy declines across the week and a new problem is the most expensive task on the board.
 
-**LLD cadence:** one pattern per week (Tue study → Thu sketch → Sun build), and every ~4 weeks one
-full LLD problem combining them.
+**LLD cadence — two independent queues, set 2026-09-08.** `lld/README.md` holds both, and it is
+the source of truth. Tue and Thu take the next **pattern** (40 min: a README, a 30-line `demo.py`,
+a `test_demo.py`). Sunday takes the next **problem** (90 min: the README first, then code).
+
+**A Sunday build never uses that week's pattern.** It uses any pattern already in the bank, so a
+missed weekday delays the pattern queue by 1 item and does not touch Sunday. There is no
+"sketch" night any more — that step existed only to serve Sunday, and it created exactly the
+coupling the student asked to remove.
+
+The pattern queue is 16 items, ordered so each one makes the next cheaper: Strategy first, then
+Factory, Template Method, Observer, State, Command, Chain of Responsibility, Adapter, Repository,
+Decorator, Facade, Composite, Iterator, Singleton, Builder — with SOLID and DI as item 00. The
+problem queue is 12, from vending machine to food delivery.
+
+**Both queues are queues, not calendars.** When the student feels behind, say this: the top of the
+queue is the same item it was 4 days ago. Nothing expired.
+
+Every ~4 weeks lane B takes a problem that combines 3 or more patterns instead of 2.
+
+**Python on purpose**, to match the DSA track. `abc`, `@property`, `__iter__` and `dataclasses`
+are the Python skills this track adds.
+
+**One shared domain for every pattern: a coffee shop order system** (chosen 2026-09-08; the prep
+tracker was considered and rejected as the domain). Same domain, 16 patterns, so only the pattern
+changes and the difference between Strategy and State becomes visible. It is also the domain of
+the standard literature, so external reading matches the student's own nouns. The
+slice-per-pattern table is `lld/README.md` section 6.
+
+Guard rails: 40 lines per file, 1 slice, **no folder imports another folder**, and this is not an
+app build.
+
+**`lld/patterns/EXAMPLE_null_object/` is a solved worked example** — README, code and 3 passing
+tests. Null Object is deliberately outside the 16-item queue, so it spoils no night. Point the
+student at it when they ask what a finished item looks like. Do not let them edit it.
+
+**The 40-minute protocol** (`lld/README.md` section 7): 10 min on 1 source, then **close it**;
+10 min to write README sections 1 and 2 from memory; 15 min to write the **test first**, then the
+demo; 5 min for the rest. Reading first is correct for a first exposure — the same rule as the
+DSA pattern-name hint. Never a second night on 1 pattern.
+
+**Tooling, added 2026-09-08.** The repo now has `.venv` and pytest (`requirements-dev.txt`).
+`./lld/run_tests.sh` runs every LLD test. Each item's files carry the slug, not `demo` — 2 files
+named `demo.py` collide under pytest.
+
+**FastAPI is deferred to item 09, on purpose.** Before that it hides the pattern behind HTTP,
+async and a server loop. At item 09 it becomes the right tool, because `Depends` is dependency
+injection. If the student asks earlier, say why and point at `lld/README.md` section 10.
+
+**As mentor in an LLD session:** the student fills the README stub from memory. Give hints and
+probe the weak section — usually "one wrong case" and "the alternative I reject". Never fill a
+section for them, and never hand them a finished `demo.py`.
 
 **Practice means producing an artifact.** For system design and LLD, reading an article or
 watching a video is not practice — it is the same trap as re-reading a stuck solution instead of

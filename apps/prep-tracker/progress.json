@@ -14,10 +14,10 @@
     "trigger": "Define boundaries, iterate per side, if matrix is not squared, need an additional constraint"
   },
   "arrays_and_strings#12": {
-    "attempts": 1,
-    "box": 2,
-    "due": "2026-08-29",
-    "last": "2026-08-21",
+    "attempts": 2,
+    "box": 4,
+    "due": "2026-09-29",
+    "last": "2026-09-08",
     "trigger": "Accumulator, store state, use it in each new iteration, normal traversal"
   },
   "arrays_and_strings#13": {
@@ -28,11 +28,11 @@
     "trigger": "Anything cyclic \u2014 rotate, shift, wrap, a circular buffer, a clock \u2014 normalize the step with % length before you do anything else.\nk %= n"
   },
   "arrays_and_strings#14": {
-    "attempts": 2,
-    "box": 2,
-    "due": "2026-08-28",
-    "last": "2026-08-25",
-    "trigger": "reverse 2 pointers, jump K * 2 steps in for loop, read the instructions\nreverse for each case in the conditions"
+    "attempts": 3,
+    "box": 3,
+    "due": "2026-09-15",
+    "last": "2026-09-08",
+    "trigger": "reverse 2 pointers, jump K * 2 steps in for loop, read the instructions\nreverse for each case in the conditions.\n\n3 edge cases, each have a different reverse range"
   },
   "arrays_and_strings#2": {
     "attempts": 1,
@@ -56,11 +56,11 @@
     "trigger": ""
   },
   "arrays_and_strings#6": {
-    "attempts": 2,
-    "box": 2,
-    "due": "2026-08-26",
-    "last": "2026-07-27",
-    "trigger": ""
+    "attempts": 3,
+    "box": 4,
+    "due": "2026-09-29",
+    "last": "2026-09-08",
+    "trigger": "Double loop, prefix needs only one value, no need to slice. to break all loops, do not use break, use return"
   },
   "arrays_and_strings#8": {
     "attempts": 4,
@@ -280,18 +280,18 @@
     "trigger": ""
   },
   "sliding_window#1": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-08-25",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-09-28",
+    "last": "2026-09-07",
+    "trigger": "find the windowSize, slide your way across the array, optimize by storing previous computes, return best result"
   },
   "sliding_window#2": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-08-29",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-09-29",
+    "last": "2026-09-08",
+    "trigger": "Sliding window, keep track of max size, dont literally flip but just keep a counter"
   },
   "sliding_window#3": {
     "attempts": 0,
@@ -315,11 +315,11 @@
     "trigger": ""
   },
   "stacks#1": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-08-25",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-09-29",
+    "last": "2026-09-08",
+    "trigger": "Handle each case separately, no need to define indices, try negative indices, collect result in a data structure"
   },
   "stacks#2": {
     "attempts": 0,
@@ -420,10 +420,10 @@
     "trigger": "Be really mindful of constraints, need to cleanup the string first, 2 pointers compare, break once condition is not valid arr[ : : -1]"
   },
   "two_pointers#8": {
-    "attempts": 1,
-    "box": 1,
-    "due": "2026-08-25",
-    "last": "2026-08-21",
-    "trigger": "Use pointers, 0 spaces means unused, so lets use them wisely. What if you traversed from the end?"
+    "attempts": 2,
+    "box": 4,
+    "due": "2026-09-28",
+    "last": "2026-09-07",
+    "trigger": "Use pointers, 0 spaces means unused, so lets use them wisely. What if you traversed from the end?\nwhat happens when one pointer is gone but you still have 1 alive?"
   }
 }
