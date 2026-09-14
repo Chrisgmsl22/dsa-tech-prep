@@ -55,6 +55,13 @@
     "last": "2026-07-22",
     "trigger": ""
   },
+  "arrays_and_strings#5": {
+    "attempts": 3,
+    "box": 4,
+    "due": "2026-09-30",
+    "last": "2026-09-09",
+    "trigger": "keep track of best option, compare every time, as soon as we find a lower option, just swap.\nnormal traversal"
+  },
   "arrays_and_strings#6": {
     "attempts": 3,
     "box": 4,
@@ -294,18 +301,18 @@
     "trigger": "Sliding window, keep track of max size, dont literally flip but just keep a counter"
   },
   "sliding_window#3": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-09-01",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-09-30",
+    "last": "2026-09-09",
+    "trigger": "slide across, grow when char is not seen, store chars in a place, keep track of the biggest at all times "
   },
   "sliding_window#4": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-09-04",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 1,
+    "due": "2026-09-11",
+    "last": "2026-09-10",
+    "trigger": "Sliding window, dont make actual replacements, track counters"
   },
   "sliding_window#5": {
     "attempts": 0,
@@ -322,18 +329,18 @@
     "trigger": "Handle each case separately, no need to define indices, try negative indices, collect result in a data structure"
   },
   "stacks#2": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-08-29",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-09-30",
+    "last": "2026-09-09",
+    "trigger": "Use a stack, check if stack has a top, append on a certain condition, pop on another certain condition"
   },
   "stacks#3": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-09-01",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-10-01",
+    "last": "2026-09-10",
+    "trigger": "Stack, stack results, pop useful elements, make operations. Trick here is to learn how to truncate an operation"
   },
   "stacks#4": {
     "attempts": 0,

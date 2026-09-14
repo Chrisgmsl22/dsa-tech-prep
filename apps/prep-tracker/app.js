@@ -52,7 +52,7 @@ const PROBLEMS = [
   { cat: "arrays_and_strings", n: 2,  title: "Merge Strings Alternately",    s: true,  f: "patterns/arrays_and_strings/merge_strings_alternately.py" },
   { cat: "arrays_and_strings", n: 3,  title: "Roman to Integer",             s: true,  f: "patterns/arrays_and_strings/roman_to_integer.py" },
   { cat: "arrays_and_strings", n: 4,  title: "Is Subsequence",               s: true,  f: "patterns/arrays_and_strings/is_subsequence.py" },
-  { cat: "arrays_and_strings", n: 5,  title: "Best Time to Buy and Sell Stock", s: false },
+  { cat: "arrays_and_strings", n: 5,  title: "Best Time to Buy and Sell Stock", s: true,  f: "patterns/arrays_and_strings/best_time_to_sell_stock.py" },
   { cat: "arrays_and_strings", n: 6,  title: "Longest Common Prefix",        s: true,  f: "patterns/two_pointers/longest_prefix.py" },
   { cat: "arrays_and_strings", n: 7,  title: "Summary Ranges",               s: false },
   { cat: "arrays_and_strings", n: 8,  title: "Product of Array Except Self", s: true,  f: "patterns/prefix_sum/product_of_array_except_self.py" },
