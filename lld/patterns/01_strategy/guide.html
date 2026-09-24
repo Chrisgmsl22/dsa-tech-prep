@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A short Strategy pattern guide with a Python refresher. Read it, close it, then write your own exercise.">
+<title>Strategy — one job, several rules</title>
+<style>
+/* Adapted from the write-artifact article template. */
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root {
+  color-scheme: light;
+  --ground:#fcfcfa; --surface:#fff; --surface-alt:#f4f5f3;
+  --ink:#14161a; --ink-soft:#474c54; --ink-muted:#686d78;
+  --hairline:#e7e7e3; --rule-strong:#c9c9c3; --accent:#b4531f;
+  --serif:'Source Serif 4',Georgia,serif;
+  --sans:Inter,Arial,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+* { box-sizing:border-box; }
+html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--ground); color:var(--ink); font:17px/1.7 var(--sans); overflow-wrap:break-word; }
+main { max-width:900px; margin:auto; padding:60px 32px 80px; }
+header { border-bottom:1px solid var(--rule-strong); padding-bottom:30px; }
+.kicker,.eyebrow { display:block; font:12px/1.5 var(--mono); letter-spacing:.12em; text-transform:uppercase; }
+.kicker { color:var(--ink-muted); margin-bottom:22px; }
+.eyebrow { color:var(--accent); margin-bottom:10px; }
+h1,h2,h3 { font-family:var(--serif); line-height:1.15; font-weight:600; }
+h1 { font-size:clamp(38px,6vw,64px); letter-spacing:-.025em; margin:0; }
+h1 span { color:var(--accent); }
+h2 { font-size:29px; margin:0 0 22px; }
+h3 { font-size:22px; margin:24px 0 12px; }
+.deck { color:var(--ink-soft); font-size:21px; line-height:1.55; margin:24px 0 0; }
+p { max-width:67ch; margin:0 0 18px; }
+section { margin-top:44px; }
+ul,ol { padding-left:24px; margin:12px 0 22px; }
+li { margin-bottom:10px; padding-left:3px; }
+a { color:#8c3f17; text-underline-offset:3px; }
+a:hover { text-decoration-thickness:2px; }
+a:focus-visible { outline:3px solid var(--accent); outline-offset:4px; }
+nav { display:flex; flex-wrap:wrap; gap:12px 24px; margin-top:24px; font-size:15px; }
+.note { border-left:3px solid var(--accent); padding:18px 22px; background:var(--surface); margin:24px 0; }
+.note p:last-child { margin-bottom:0; }
+.table-wrap { width:100%; overflow-x:auto; border:1px solid var(--hairline); margin:18px 0; }
+table { border-collapse:collapse; width:100%; background:var(--surface); table-layout:auto; }
+caption { text-align:left; padding:12px 16px; font-weight:600; }
+th,td { text-align:left; vertical-align:top; padding:12px 16px; border-bottom:1px solid var(--hairline); }
+th { background:var(--surface-alt); border-bottom:2px solid var(--rule-strong); font:12px/1.6 var(--mono); text-transform:uppercase; }
+tbody tr:last-child td { border-bottom:0; }
+.c-key { min-width:140px; width:24%; }
+.c-prose { min-width:270px; }
+.term { font-family:var(--mono); font-size:.9em; }
+.source { font-size:15px; color:var(--ink-soft); }
+.sources { font-size:15px; }
+footer { margin-top:44px; padding-top:22px; border-top:1px solid var(--rule-strong); font-size:15px; }
+@media(max-width:600px) {
+  main { padding:32px 20px 50px; }
+  h2 { font-size:26px; }
+  .deck { font-size:19px; }
+  section { margin-top:34px; }
+  .note { padding:16px; }
+}
+@media print {
+  body { font-size:11pt; }
+  main { max-width:none; padding:0; }
+  nav { display:none; }
+  h2,h3 { break-after:avoid; }
+  tr { break-inside:avoid; }
+  .table-wrap { overflow:visible; }
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <span class="kicker">LLD / 01 / Coffee shop</span>
+  <h1><span>Strategy</span><br>One job, several rules.</h1>
+  <p class="deck">Strategy separates a task from the rule that performs it. You can replace the rule through the same contract.</p>
+  <p style="margin-top:18px">Use this guide to explain the pattern, then design your own small price-rule exercise.</p>
+  <nav aria-label="Article sections">
+    <a href="#idea">The idea</a>
+    <a href="#mechanism">How it works</a>
+    <a href="#python">Python refresher</a>
+    <a href="#practice">Your first attempt</a>
+  </nav>
+</header>
+
+<section id="idea">
+  <span class="eyebrow">01 / The idea</span>
+  <h2>The job stays the same. The rule varies.</h2>
+  <p>A coffee shop needs a final price. The shop can apply full price, a happy-hour rule, or a staff discount.</p>
+  <p>All three rules answer the same question. Each rule can calculate its answer in a different way.</p>
+  <p>Strategy puts each variation behind a shared <strong>contract</strong>: the operation, accepted inputs, expected result, and behavior that callers can rely on.</p>
+  <p>The caller uses that contract. It does not need the details of each calculation.</p>
+  <aside class="note">
+    <p><strong>Picture a cashier with a policy card.</strong> The cashier asks for the final price through the same request each time.</p>
+    <p>A different card changes the price rule. It does not change the cashier’s task.</p>
+  </aside>
+</section>
+
+<section id="mechanism">
+  <span class="eyebrow">02 / The mechanism</span>
+  <h2>One object delegates work to another.</h2>
+  <p><strong>Delegation</strong> means that one object asks another object to perform part of its work.</p>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Strategy roles">
+    <table>
+      <thead><tr><th class="c-key" scope="col">Role</th><th class="c-prose" scope="col">Responsibility</th></tr></thead>
+      <tbody>
+        <tr><td class="c-key">Context</td><td class="c-prose">Uses a strategy to complete part of its task.</td></tr>
+        <tr><td class="c-key">Strategy contract</td><td class="c-prose">Defines what all interchangeable strategies must support.</td></tr>
+        <tr><td class="c-key">Concrete strategy</td><td class="c-prose">Supplies one version of the rule.</td></tr>
+        <tr><td class="c-key">Client</td><td class="c-prose">Chooses a strategy and supplies it to the context.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The client supplies the choice. The context calls the selected strategy. That strategy returns the result.</p>
+  <p>The choice still exists. Strategy moves it away from the code that uses the rule.</p>
+  <p>You can select a strategy when you create the context. A later replacement is optional.</p>
+  <p class="source">Pattern reference: <a href="https://refactoring.guru/design-patterns/strategy">Refactoring.Guru — Strategy</a>.</p>
+</section>
+
+<section id="judgment">
+  <span class="eyebrow">03 / The trade-off</span>
+  <h2>Separate a real variation.</h2>
+  <ul>
+    <li>Strategy helps when alternative rules change independently.</li>
+    <li>Extra classes cost effort when a small, stable conditional already expresses the task clearly.</li>
+    <li>Python functions can serve as strategies. The pattern does not require a class for every rule.</li>
+  </ul>
+  <p>For this exercise, use objects to practise a shared contract. Your existing stub points toward an abstract base class.</p>
+  <p>Keep the exercise within the coffee shop price slice. Choose your own names, inputs, outputs, and discount values.</p>
+</section>
+
+<section id="python">
+  <span class="eyebrow">04 / Python refresher</span>
+  <h2>Use these concepts to express the design.</h2>
+  <p>Consult the terms you need within the same ten-minute read. You do not need a separate prerequisite exercise.</p>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Python concepts for the first Strategy exercise">
+    <table>
+      <thead><tr><th class="c-key" scope="col">Concept</th><th class="c-prose" scope="col">Quick reminder</th></tr></thead>
+      <tbody>
+        <tr><td class="c-key">Class and instance</td><td class="c-prose">A class defines a type. An instance is one object of that type. Define a class with <span class="term">class</span>.</td></tr>
+        <tr><td class="c-key">Function and method</td><td class="c-prose">Define a function with <span class="term">def</span>. An instance method operates on an object. Its first parameter conventionally has the name <span class="term">self</span>.</td></tr>
+        <tr><td class="c-key">Parameters and arguments</td><td class="c-prose">A parameter names an input in a definition. An argument supplies a value in a call.</td></tr>
+        <tr><td class="c-key"><span class="term">self</span></td><td class="c-prose">Refers to the current instance. A method call through an instance supplies that instance automatically.</td></tr>
+        <tr><td class="c-key"><span class="term">__init__</span></td><td class="c-prose">Initializes an instance after Python creates it. It establishes the data and collaborators that the object needs.</td></tr>
+        <tr><td class="c-key">Instance attributes</td><td class="c-prose">Hold data for a particular object. A mutable class attribute can share data across instances by accident.</td></tr>
+        <tr><td class="c-key">Return value</td><td class="c-prose"><span class="term">return</span> gives a result to the caller. A function without an explicit result returns <span class="term">None</span>. A print only produces output.</td></tr>
+        <tr><td class="c-key">Composition</td><td class="c-prose">An object holds another object as a collaborator. The context uses the rule through that object.</td></tr>
+        <tr><td class="c-key">Inheritance</td><td class="c-prose">A subclass derives from a base class. It can supply its own implementation of a method.</td></tr>
+        <tr><td class="c-key">Polymorphism</td><td class="c-prose">Different objects support the same operation. The caller uses that operation without a separate branch for each concrete type.</td></tr>
+        <tr><td class="c-key">Type hints</td><td class="c-prose">Describe expected types for readers and type checkers. Python does not enforce ordinary type hints at runtime.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="source">Python references: <a href="https://docs.python.org/3/tutorial/classes.html">classes and methods</a>, <a href="https://docs.python.org/3/tutorial/controlflow.html#defining-functions">functions</a>, and <a href="https://docs.python.org/3/library/typing.html">type hints</a>.</p>
+
+  <h3>An interface describes a promise.</h3>
+  <p>Python has no dedicated <span class="term">interface</span> keyword. You can express a shared contract in several ways.</p>
+  <ul>
+    <li><strong>Duck typing:</strong> the caller uses the required operation. The object must support it.</li>
+    <li><strong>Abstract base class:</strong> <span class="term">ABC</span> supplies an explicit base type. <span class="term">abstractmethod</span> marks a method that a concrete subclass must implement.</li>
+    <li><strong>Protocol:</strong> describes the required members for structural type checks. A class with those members need not inherit from it.</li>
+  </ul>
+  <p>Python prevents direct instances of an abstract class while abstract methods remain unresolved. It does not prove correct method signatures or behavior.</p>
+  <p>Your stub already imports <span class="term">ABC</span> and <span class="term">abstractmethod</span>. Use that route for this first attempt.</p>
+  <p class="source">Python references: <a href="https://docs.python.org/3/library/abc.html">abstract base classes</a> and <a href="https://docs.python.org/3/library/typing.html#typing.Protocol">Protocol</a>.</p>
+</section>
+
+<section id="checks">
+  <span class="eyebrow">05 / If you get stuck</span>
+  <h2>Check the contract before you add more classes.</h2>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Design checks">
+    <table>
+      <thead><tr><th class="c-key" scope="col">Symptom</th><th class="c-prose" scope="col">First check</th></tr></thead>
+      <tbody>
+        <tr><td class="c-key">Every new rule changes the caller.</td><td class="c-prose">Does the caller use a shared operation, or inspect concrete types?</td></tr>
+        <tr><td class="c-key">A replacement rule breaks the result.</td><td class="c-prose">Do the rules agree on input units, output type, and output meaning?</td></tr>
+        <tr><td class="c-key">Python refuses to create an object.</td><td class="c-prose">Does that class still have an abstract method without a concrete implementation?</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="practice">
+  <span class="eyebrow">06 / Your first attempt</span>
+  <h2>Close the guide. Make the design yours.</h2>
+  <ol>
+    <li>Read this guide within the first ten minutes.</li>
+    <li>Close it before you write README sections 1 and 2 from memory.</li>
+    <li>Choose one input and its expected result for your first test.</li>
+    <li>Write the test before you write the implementation.</li>
+    <li>Check whether another rule works through the same caller.</li>
+    <li>Complete the remaining README prompts within your current forty-minute session.</li>
+  </ol>
+  <aside class="note">
+    <p><strong>Questions to answer yourself:</strong></p>
+    <ul>
+      <li>Which part stays the same when the price rule changes?</li>
+      <li>What exactly must each rule accept and return?</li>
+      <li>Who chooses the rule?</li>
+      <li>What would make a plain function sufficient?</li>
+    </ul>
+  </aside>
+  <p>Use the existing exercise files. Keep each Python file at forty lines or fewer. Keep all code within this folder.</p>
+  <p class="source">Exercise scope and time limits: <a href="../../README.md#7-how-to-start-a-pattern--the-40-minute-protocol">the LLD practice protocol</a>.</p>
+</section>
+
+<footer>
+  Next: <a href="README.md">write your Strategy notes</a>, then use your editor for the test and implementation.
+</footer>
+</main>
+</body>
+</html>

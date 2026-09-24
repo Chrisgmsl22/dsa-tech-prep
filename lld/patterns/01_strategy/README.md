@@ -4,6 +4,8 @@
 - **Prerequisite items:** none
 - **Status:** not started
 
+Read the [Strategy guide](guide.html) within your ten-minute source slot. Close it before you fill in your notes.
+
 ## The problem it solves
 
 One job, several interchangeable algorithms. How do you swap one without an `if` chain at the call site?
@@ -19,30 +21,26 @@ The root of the track. An interface plus swappable implementations is the shape 
 
 ## 1. In my own words
 
-<!-- 2 sentences. What does the pattern do? Do not name the parts yet. -->
+Strategy is a behavioral design pattern, ist purpose is to indicate which strategy, or class instance we should check based on a condition. In my mind, this is kind of like a switch case?, where based on a certain condition, we simply instanciate the object and return it?
+
+Or maybe this design pattern is here because it actually helps us avoid nestig IF statements, we could have 50 strategies, for instance
 
 ## 2. The parts
 
-<!-- One line each. Name each class or role and its single responsibility. -->
+We need to define a base abstract class, which acts as the minimal possible structure to define. Then we define each strategy that implements that in its own way.
+
+And lastly we need the actual mechanism to define the strategy.
+
+1. Define the strategy interface
 
 ## 3. One good case
 
-<!-- A concrete case where this is the right choice. -->
-
 ## 4. One wrong case
-
-<!-- A concrete case where it adds cost and buys nothing. This section is the one that
-     separates understanding from memory. -->
 
 ## 5. The alternative I reject
 
-<!-- Which other pattern, or which plain-code answer, did you turn down? Why? -->
-
 ## 6. Where I saw it
 
-<!-- A real file path from a repo you read, at work or open source.
-     If you find none, write "not found yet" and return to this line later. -->
+This is the first time I am reading this to be honest
 
 ## 7. SOLID link
-
-<!-- Which principle from item 00 does this pattern serve? -->

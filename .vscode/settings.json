@@ -1,3 +1,8 @@
 {
-    "livePreview.defaultPreviewPath": "/playground/graphs/bfs_traversal/index.html"
+    "livePreview.defaultPreviewPath": "/playground/graphs/bfs_traversal/index.html",
+    "[python]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false
+    }
 }

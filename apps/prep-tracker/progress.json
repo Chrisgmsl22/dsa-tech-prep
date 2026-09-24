@@ -1,10 +1,10 @@
 {
   "arrays_and_strings#1": {
-    "attempts": 1,
-    "box": 3,
-    "due": "2026-09-02",
-    "last": "2026-07-16",
-    "trigger": ""
+    "attempts": 2,
+    "box": 4,
+    "due": "2026-10-14",
+    "last": "2026-09-23",
+    "trigger": "traverse, compare abs values, store real ones. When finding two equals, if one is negative, prioritize the positive one"
   },
   "arrays_and_strings#10": {
     "attempts": 3,
@@ -112,11 +112,11 @@
     "trigger": ""
   },
   "binary_search#1": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-08-26",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-10-14",
+    "last": "2026-09-23",
+    "trigger": "Binary search algorithm, 2 pointers, find middle point, if bigger move left, if smaller move right\n-1 if not found"
   },
   "binary_search#2": {
     "attempts": 0,
@@ -203,11 +203,11 @@
     "trigger": ""
   },
   "hashmaps_and_sets#1": {
-    "attempts": 1,
-    "box": 3,
-    "due": "2026-08-28",
-    "last": "2026-08-10",
-    "trigger": "Overkill is not always needed, compare both places, do we need to use a collector? (hashMap, set) or is a counter enough"
+    "attempts": 2,
+    "box": 4,
+    "due": "2026-10-14",
+    "last": "2026-09-23",
+    "trigger": "Overkill is not always needed, compare both places, do we need to use a collector? (hashMap, set) or is a counter enough. Counter, direct lookup, call it a day "
   },
   "hashmaps_and_sets#2": {
     "attempts": 1,
@@ -229,6 +229,20 @@
     "due": "2026-08-31",
     "last": "2026-08-10",
     "trigger": "Compare 2 contents, frequencyCounter, basic checks, check valid contraints for lookups, you can compare hashMaps"
+  },
+  "hashmaps_and_sets#5": {
+    "attempts": 1,
+    "box": 3,
+    "due": "2026-09-29",
+    "last": "2026-09-22",
+    "trigger": "CharCount, reduce from charCount, use a \"return\" to top nested iterations.\nKeep a key dict"
+  },
+  "hashmaps_and_sets#6": {
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-10-14",
+    "last": "2026-09-23",
+    "trigger": "hashMap, store indices, dont sum up, instead use target - currNum to form a candidate. If candidate is present in map, we have our answer"
   },
   "heaps#1": {
     "attempts": 0,
@@ -259,11 +273,11 @@
     "trigger": ""
   },
   "linked_lists#1": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-08-26",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-10-14",
+    "last": "2026-09-23",
+    "trigger": "pointers, traverse, if duplicate, connect to the NEXT NEXT.\nNo need to use a hash set.\nOnce completed, return the initial start of the list (need a pointer to keep track of start or return head)"
   },
   "linked_lists#2": {
     "attempts": 0,
@@ -308,18 +322,18 @@
     "trigger": "slide across, grow when char is not seen, store chars in a place, keep track of the biggest at all times "
   },
   "sliding_window#4": {
-    "attempts": 1,
-    "box": 1,
-    "due": "2026-09-11",
-    "last": "2026-09-10",
-    "trigger": "Sliding window, dont make actual replacements, track counters"
+    "attempts": 2,
+    "box": 2,
+    "due": "2026-09-24",
+    "last": "2026-09-21",
+    "trigger": "Sliding window, dont make actual replacements, track counters, how do you obtain the replacements needed?"
   },
   "sliding_window#5": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-09-08",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 3,
+    "due": "2026-09-29",
+    "last": "2026-09-22",
+    "trigger": "Sliding window, track current smallest, and shrink inside while loop"
   },
   "stacks#1": {
     "attempts": 1,
@@ -343,11 +357,11 @@
     "trigger": "Stack, stack results, pop useful elements, make operations. Trick here is to learn how to truncate an operation"
   },
   "stacks#4": {
-    "attempts": 0,
+    "attempts": 1,
     "box": 2,
-    "due": "2026-09-05",
-    "last": null,
-    "trigger": ""
+    "due": "2026-09-25",
+    "last": "2026-09-22",
+    "trigger": "Monotonic stack, while stack exists and a condition is met, keep popping and compute the result.\nDo not store temps, but the actual indices, when them we can get the values"
   },
   "trees#1": {
     "attempts": 0,
