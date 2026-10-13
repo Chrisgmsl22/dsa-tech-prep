@@ -253,10 +253,9 @@ function daysUntil(iso) {
   const b = new Date(iso + "T00:00:00");
   return Math.round((b - a) / 86400000);
 }
-// Monday to Sunday, local time. getDay() is 0 on Sunday, so Sunday steps back 6.
+// Monday to Sunday, local time.
 function weekBounds(iso) {
-  const dow = new Date(iso + "T00:00:00").getDay();
-  const monday = addDays(iso, -((dow + 6) % 7));
+  const monday = mondayOf(iso, new Date(iso + "T00:00:00").getDay());
   return { start: monday, end: addDays(monday, 6) };
 }
 function id(p) { return p.cat + "#" + p.n; }
@@ -323,6 +322,12 @@ let LOCAL_AHEAD = null; // {keys, mirror} -- this browser holds work the file la
 let REVISION = null;    // ETag of the progress file this tab loaded
 let postsInFlight = 0;
 let localEdits = 0;     // bumped on every save, so a refresh can tell it raced one
+let savedEdits = 0;     // the localEdits value the server last accepted
+
+/* A save the server has not accepted yet: pending, in flight, or FAILED. The
+ * failed case is the one that matters. A refresh that ignored it would replace
+ * STATE and drop the grade; leaving it lets the next save 409 and halt. */
+function hasUnsaved() { return savedEdits < localEdits; }
 
 function isHalted() { return HALT !== null || LOCAL_AHEAD !== null; }
 
@@ -427,6 +432,7 @@ async function loadProgress() {
 function postState() {
   saveTimer = null;
   postsInFlight++;
+  const sending = localEdits;
   return fetch(API, {
     method: "POST",
     headers: { "Content-Type": "application/json", "If-Match": REVISION || "*" },
@@ -448,12 +454,25 @@ function postState() {
       }
       if (!r.ok) throw new Error("HTTP " + r.status);
       REVISION = r.headers.get("ETag") || REVISION;
+      savedEdits = Math.max(savedEdits, sending);
       setFootNote(true);
     })
     // Previously `.catch(() => {})` — a dead server meant every grade looked
     // saved and silently wasn't. You'd only find out at `git status`, or never.
     .catch(() => setFootNote(false))
     .finally(() => { postsInFlight--; });
+}
+
+function writeMirror() {
+  try {
+    localStorage.setItem(
+      STORE_KEY,
+      JSON.stringify({ savedAt: new Date().toISOString(), state: STATE })
+    );
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 /* `immediate` skips the debounce. Only textarea typing needs debouncing;
@@ -464,15 +483,8 @@ function saveState(opts) {
   if (isHalted()) return; // never write while the stored data is in doubt
   localEdits++;
   // Always mirror locally so an offline reload still has the latest.
-  try {
-    localStorage.setItem(
-      STORE_KEY,
-      JSON.stringify({ savedAt: new Date().toISOString(), state: STATE })
-    );
-  } catch (_) {
-    // Offline, localStorage IS the store, so a swallowed failure is total loss.
-    if (!SERVER_MODE) setFootNote(false, "storage");
-  }
+  // Offline, localStorage IS the store, so a refused write is total loss.
+  if (!writeMirror() && !SERVER_MODE) setFootNote(false, "storage");
   if (!SERVER_MODE) return;
   clearTimeout(saveTimer);
   if (opts && opts.immediate) {
@@ -504,7 +516,7 @@ window.addEventListener("beforeunload", () => {
  * grade up on return. Only when this tab has nothing of its own to send:
  * otherwise the next save's 409 is the correct outcome, and it halts. */
 async function refreshIfChanged() {
-  const busy = () => isHalted() || saveTimer !== null || postsInFlight > 0;
+  const busy = () => isHalted() || saveTimer !== null || postsInFlight > 0 || hasUnsaved();
   if (!SERVER_MODE || busy()) return;
   const editsBefore = localEdits;
   let r, data;
@@ -521,6 +533,7 @@ async function refreshIfChanged() {
   if (busy() || localEdits !== editsBefore) return; // a grade landed mid-fetch
   STATE = data;
   REVISION = etag;
+  writeMirror(); // else the next load compares the file with a stale mirror
   render();
 }
 document.addEventListener("visibilitychange", () => {
@@ -697,18 +710,11 @@ function exportProgress() {
   setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 0);
 }
 
-/* Problems still to do in today's rep window. The window refills as you grade,
- * so the badge counts down from today's reps instead, and the backlog total
- * stays hidden: it measured the pile, not the day. New problems and quick reps
- * have their own steps on the Today card, so they do not count here. */
+// The badge: today's reps, not the backlog total, which measured the pile.
 function repsLeftToday() {
-  const today = todayISO();
   const windowLen = selectWindow(dueCandidates(PROBLEMS.filter(isDue)), WINDOW_SIZE).length;
-  const repsDone = PROBLEMS.filter((p) => {
-    const st = prog(p);
-    return isDoneToday(p) && st.started !== today && st.kind !== "quick";
-  }).length;
-  return Math.max(0, Math.min(windowLen, WINDOW_SIZE - repsDone));
+  const gradedToday = PROBLEMS.filter(isDoneToday).map(prog);
+  return repsLeft(windowLen, gradedToday, todayISO(), WINDOW_SIZE);
 }
 
 function thisWeek() {
@@ -959,7 +965,7 @@ function doneSectionHTML(done) {
 function emptyMessage() {
   if (VIEW === "due")
     return CAT_FILTER === "all"
-      ? "Nothing due today. 🎉 Pull a fresh problem from the New tab, or come back tomorrow."
+      ? "Nothing due today. 🎉 Step 3 below has a new problem, or come back tomorrow."
       : "Nothing due in this category today.";
   if (VIEW === "new") return "No new problems left in this filter — you've started them all.";
   return "No problems match this filter.";
@@ -1017,7 +1023,7 @@ function rowHTML(p, opts) {
  * gradeProblem() does, so the Fast interval shown is the one you get. */
 function panelHTML(p, st, hideCat) {
   const gradedToday = isDoneToday(p);
-  const base = (gradedToday && BEFORE_TODAY[id(p)]) || st;
+  const { base } = regradeBase(st, BEFORE_TODAY[id(p)], todayISO());
   const kind = gradeKind(base);
   const grades = GRADES.map((g) => {
     const days = INTERVAL[nextBox(base.box, g.box, kind)];
@@ -1059,7 +1065,9 @@ function panelHTML(p, st, hideCat) {
   return (
     `<p class="panel__label">Grade your attempt (solve it blind first)</p>` +
     `<div class="grades">${grades}</div>` +
-    triggerBlock("Trigger sentence — what tips you off to the pattern?") +
+    (hideCat
+      ? ((st.trigger || "").trim() ? `<p class="history">📝 your note shows after you grade</p>` : "")
+      : triggerBlock("Trigger sentence — what tips you off to the pattern?")) +
     src +
     hist
   );
@@ -1352,8 +1360,8 @@ listEl.addEventListener("input", (e) => {
 function gradeProblem(pid, grade) {
   const today = todayISO();
   const cur = STATE[pid] || { box: 0, due: null, last: null, attempts: 0, trigger: "" };
-  if (cur.last !== today || !BEFORE_TODAY[pid]) BEFORE_TODAY[pid] = { ...cur };
-  const base = cur.last === today ? BEFORE_TODAY[pid] : cur;
+  const { base, snapshot } = regradeBase(cur, BEFORE_TODAY[pid], today);
+  BEFORE_TODAY[pid] = snapshot;
   STATE[pid] = {
     ...applyGrade(base, grade, today, (box) => addDays(today, INTERVAL[box])),
     trigger: cur.trigger || "",

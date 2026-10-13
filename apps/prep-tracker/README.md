@@ -98,7 +98,7 @@ problem down. A quick rep can hold box 6 but never earn it: it lands on box 5 in
 **Write the trigger sentence** after each grade, in the panel that stays open — e.g. *"sorted
 array + find a pair → two pointers from both ends."* It saves automatically.
 
-**Done today** keeps every problem graded today on screen, now with its category.
+**Done today** keeps every problem graded today on screen, with its category.
 
 ### Recording a quick rep: `grade.py`
 

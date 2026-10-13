@@ -46,6 +46,37 @@ function applyGrade(base, grade, today, dueFor) {
   return graded;
 }
 
+/* A re-grade ("graded it wrong?") must start from the entry as it was before
+ * today's first grade, or a second Fast click climbs twice. `snapshot` is that
+ * entry, if this tab saw it; without one, the current entry is the best base. */
+function regradeBase(cur, snapshot, today) {
+  const snap = cur.last !== today || !snapshot ? { ...cur } : snapshot;
+  return { base: cur.last === today ? snap : cur, snapshot: snap };
+}
+
+/* `weekday` is Date#getDay() of `iso` (0 = Sunday), passed in so this file
+ * never constructs a Date. Steps back at most 6 days across month and year. */
+function mondayOf(iso, weekday) {
+  let [y, m, d] = iso.split("-").map(Number);
+  d -= (weekday + 6) % 7;
+  if (d < 1) {
+    m -= 1;
+    if (m < 1) { m = 12; y -= 1; }
+    const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+    d += [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
+  }
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${y}-${pad(m)}-${pad(d)}`;
+}
+
+/* Reps left in today's window. The window refills as you grade, so count
+ * down from windowSize instead of showing its length. New problems and quick
+ * reps have their own Today steps and do not count. */
+function repsLeft(windowLen, gradedToday, today, windowSize) {
+  const repsDone = gradedToday.filter((e) => e.started !== today && e.kind !== "quick").length;
+  return Math.max(0, Math.min(windowLen, windowSize - repsDone));
+}
+
 /* Week tallies for the stat strip. Dates are ISO strings, so a plain string
  * compare is a date compare. A problem started this week counts once, as new,
  * even if it was also re-graded; everything else graded this week is a rep. */
@@ -209,6 +240,7 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     TIERS, TIER_SHARE, WINDOW_SIZE, INTERVAL, ROADMAP_CATEGORY, LAST_CATEGORY,
     largestRemainder, tierOf, isUrgent, comparePriority, selectWindow,
-    nextBox, gradeKind, applyGrade, weeklyCounts, pickNewProblem,
+    nextBox, gradeKind, applyGrade, regradeBase, mondayOf, repsLeft,
+    weeklyCounts, pickNewProblem,
   };
 }

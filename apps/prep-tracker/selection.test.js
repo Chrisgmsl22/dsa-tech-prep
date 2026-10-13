@@ -344,3 +344,60 @@ test("weeklyCounts: a grade.py quick rep (no started) counts as a rep", () => {
   const quick = { ...TRIAGE, box: 3, last: DAY, attempts: 1, kind: "quick" };
   assert.deepStrictEqual(S.weeklyCounts([quick], "2026-10-12", "2026-10-18"), { newCount: 0, reps: 1 });
 });
+
+// ---- re-grade, week start, reps left (review round 1) ----
+
+test("regradeBase: a second Fast click on the same day does not climb twice", () => {
+  let snapshot;
+  let entry = { ...LEGACY };                         // box 4
+  for (let click = 1; click <= 3; click++) {
+    const r = S.regradeBase(entry, snapshot, DAY);
+    snapshot = r.snapshot;
+    entry = S.applyGrade(r.base, FAST, DAY, dueFor);
+    assert.strictEqual(entry.box, 5, `click ${click}`);
+    assert.strictEqual(entry.attempts, 3, `click ${click} counts once`);
+  }
+});
+
+test("regradeBase: a re-grade can still go down, from the same base", () => {
+  const first = S.regradeBase({ ...LEGACY }, undefined, DAY);
+  const graded = S.applyGrade(first.base, FAST, DAY, dueFor);
+  const again = S.regradeBase(graded, first.snapshot, DAY);
+  assert.strictEqual(S.applyGrade(again.base, FAILED, DAY, dueFor).box, 1);
+  assert.deepStrictEqual(again.base, LEGACY);
+});
+
+test("regradeBase: a grade on a new day takes a fresh snapshot", () => {
+  const stale = { ...LEGACY, box: 1 };
+  const r = S.regradeBase(LEGACY, stale, DAY);       // LEGACY.last is not DAY
+  assert.strictEqual(r.base, LEGACY);
+  assert.deepStrictEqual(r.snapshot, LEGACY);
+});
+
+test("regradeBase: graded today with no snapshot (after a reload) uses the current entry", () => {
+  const cur = { ...LEGACY, last: DAY, box: 5 };
+  assert.strictEqual(S.regradeBase(cur, undefined, DAY).base.box, 5);
+});
+
+test("mondayOf: steps back to Monday, across month, year and leap day", () => {
+  assert.strictEqual(S.mondayOf("2026-10-12", 1), "2026-10-12");  // Monday
+  assert.strictEqual(S.mondayOf("2026-10-18", 0), "2026-10-12");  // Sunday
+  assert.strictEqual(S.mondayOf("2026-10-14", 3), "2026-10-12");  // Wednesday
+  assert.strictEqual(S.mondayOf("2026-11-01", 0), "2026-10-26");  // month boundary
+  assert.strictEqual(S.mondayOf("2027-01-02", 6), "2026-12-28");  // year boundary
+  assert.strictEqual(S.mondayOf("2024-03-02", 6), "2024-02-26");  // leap February
+  assert.strictEqual(S.mondayOf("2023-03-01", 3), "2023-02-27");  // non-leap February
+  assert.strictEqual(S.mondayOf("2000-03-02", 4), "2000-02-28");  // 400-year rule: leap
+  assert.strictEqual(S.mondayOf("2200-03-01", 6), "2200-02-24");  // 100-year rule: not leap
+});
+
+test("repsLeft: counts down from the window size; new problems and quick reps do not count", () => {
+  const rep = { last: DAY, kind: "full" };
+  const newOne = { last: DAY, kind: "new", started: DAY };
+  const quick = { last: DAY, kind: "quick" };
+  const legacy = { last: DAY };                      // graded before kind existed
+  assert.strictEqual(S.repsLeft(3, [], DAY, 3), 3);
+  assert.strictEqual(S.repsLeft(3, [rep, newOne, quick], DAY, 3), 2);
+  assert.strictEqual(S.repsLeft(3, [rep, legacy, rep, rep], DAY, 3), 0, "never below 0");
+  assert.strictEqual(S.repsLeft(1, [], DAY, 3), 1, "never above the window");
+});
