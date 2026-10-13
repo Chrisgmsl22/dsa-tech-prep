@@ -1360,7 +1360,7 @@ function gradeProblem(pid, grade) {
   const base = cur.last === today ? BEFORE_TODAY[pid] : cur;
   const kind = gradeKind(base);
   const box = nextBox(base.box, grade, kind);
-  STATE[pid] = {
+  const graded = {
     ...base,
     box,
     due: addDays(today, INTERVAL[box]),
@@ -1368,8 +1368,11 @@ function gradeProblem(pid, grade) {
     attempts: (base.attempts || 0) + 1,
     trigger: cur.trigger || "",
     kind,
-    started: base.started || today,
   };
+  // Only a first grade dates `started`. Stamping an older entry with today
+  // would count a months-old problem as new this week.
+  if (kind === "new" && !base.started) graded.started = today;
+  STATE[pid] = graded;
   saveState({ immediate: true }); // a grade is one discrete event — never debounce it
   // Stay open. The row relocates to "Done today" and keeps the note prompt on
   // screen; FOCUS_TRIGGER makes render() put the cursor in it.
