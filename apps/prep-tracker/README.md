@@ -12,6 +12,9 @@ sprint). It runs on two evidence-backed learning techniques:
 The goal is a **mix**: keep your already-solved problems sharp (retention) while dripping in
 new ones (growth), at a sustainable ~30–60 min/day.
 
+**The rules live in [`PRACTICE.md`](../../PRACTICE.md)**: rep types, how to grade, the boxes, and
+the order of new problems. This file covers how the app implements them.
+
 ---
 
 ## 1. How to start it
@@ -51,51 +54,79 @@ An empty `{}` fixture will seed itself from the catalog on first load, exactly l
 ### Running the tests
 
 ```bash
-node --test apps/prep-tracker/selection.test.js   # daily-window selection logic
-python3 apps/prep-tracker/server_test.py          # persistence safety (22 cases)
+cd apps/prep-tracker && node --test               # selection logic: window, boxes, new-problem order
+.venv/bin/python -m pytest apps/prep-tracker      # grade.py, plus the server safety script
+python3 apps/prep-tracker/server_test.py          # persistence safety on its own (22 cases)
 ```
 
-No install step — Node's built-in test runner and the Python stdlib. The server test points a
-throwaway server at a tempfile, so it never touches your real progress.
+No install step for the app — Node's built-in test runner and the Python stdlib; pytest comes from
+the repo's `.venv`. The Python tests point throwaway servers at temp files on OS-assigned ports, so
+they never touch your real progress or a tracker running on :8000.
 
 ---
 
 ## 2. The daily loop (how to use it)
 
-1. **Open the app.** It lands on the **Due today** tab — the problems the schedule wants you
-   to revisit right now, capped at **3 a day**. Three reps fit in ~35 minutes, which means they
-   get finished; a queue you can empty is what gives you permission to open something new.
-2. **Pick the top one.** Weak buckets (red/amber) always sort to the top, so you face your
-   shakiest problems first.
-3. **Solve it blind.** Open your editor, set a ~25-min timer, and write the solution *from
-   scratch* — no peeking at your old file. If you stall for 10 min, jot down which *pattern*
-   you think it is, then peek.
-4. **Grade yourself honestly** by clicking the problem to expand it, then one of:
+The **Due today** tab opens on the **Today card**, three steps in order:
 
-   | Button | Meaning | Next review |
-   | ------ | ------- | ----------- |
-   | 🔴 **Failed** | needed the solution | tomorrow (+1d) |
-   | 🟡 **Slow** | solved, but with hints / slowly | +3 days |
-   | 🟢 **Clean** | solved with some hesitation | +1 week |
-   | 🔵 **Fast** | instant & confident | +3 weeks (mastered) |
+1. **Quick rep.** Run `/quick-rep` in Claude Code (10 min). The step ticks itself once a
+   quick-rep grade lands today (see `grade.py` below). On a rough day this alone is a win.
+2. **Reps.** The 3-problem window. Weak buckets (red/amber) sort to the top. Solve each one
+   **blind**, then click it and grade. The row shows **no category** until you grade it, and
+   the file path hides too: spotting the pattern is part of the rep.
+3. **New problem.** The next one in the PRACTICE.md order, with a weekly counter
+   (`this week: N/2`). At 2 it stays visible as a **stretch**; at 3 the step says
+   **week done** and shows no problem. The quota is weekly, so a missed day moves nothing.
 
-   The grade sets the problem's **box** and schedules when it comes back. Grading collapses the
-   row and removes it from today's list — it feels like clearing a worklist.
-5. **Write the trigger sentence.** In the expanded panel, fill in *"what tips you off to the
-   pattern?"* — e.g. *"sorted array + find a pair → two pointers from both ends."* This single
-   sentence is the thing that transfers to problems you've never seen. It saves automatically.
-6. **Then one new problem, if you have the hour.** Switch to the **New** tab and pull a fresh
-   one. Give it the full 60-minute cap; if it does not land, grade it **Failed** and it joins
-   the rotation tomorrow like anything else. That is a finished session, not a failed one.
-   Prefer categories you have never touched — coverage beats another rep on a pattern you know.
-   Core categories (Arrays & Strings, Hashmaps & Sets, Two Pointers, Sliding Window) are
-   starred ★.
+**Grading.** Click a problem and press one of the four buttons. Each sub-label is the
+PRACTICE.md "How to grade" check: the full-rep checks for a problem you have graded before,
+the new-problem checks for a first attempt. Each ends with the real next interval for that
+problem (Fast on a box 4 problem says `+45d`).
+
+| Box | Reached by | Next review |
+| --- | --- | --- |
+| 1 | 🔴 **Failed** | +1 day |
+| 2 | 🟡 **Slow** | +3 days |
+| 3 | 🟢 **Clean** | +7 days |
+| 4 | 🔵 **Fast** from box 0 to 3 | +21 days |
+| 5 | **Fast** from box 4 | +45 days |
+| 6 | **Fast** from box 5 | +120 days |
+
+Fast climbs one box at a time; any other grade sets that grade's box, so a miss drops the
+problem down. A quick rep can hold box 6 but never earn it: it lands on box 5 instead.
+
+**Write the trigger sentence** after each grade, in the panel that stays open — e.g. *"sorted
+array + find a pair → two pointers from both ends."* It saves automatically.
+
+**Done today** keeps every problem graded today on screen, now with its category.
+
+### Recording a quick rep: `grade.py`
+
+```bash
+python3 apps/prep-tracker/grade.py two_pointers#3 pass          # or: fail
+python3 apps/prep-tracker/grade.py stacks#1 pass --date 2026-10-12
+```
+
+- `fail` → Failed (box 1). `pass` on a triage problem (box 2, never graded) → Clean (box 3).
+  `pass` on box 4 and up → Fast as a quick rep (box 5 at most). Any other `pass` → Clean.
+- It writes `kind: "quick"`, adds 1 to `attempts`, sets `last` and `due`, keeps the trigger, and
+  sets `started` only if it is missing. It prints one line: `key: box 4 → 5, next due …`.
+- **Write path.** When the server answers on `localhost:${PORT:-8000}`, the grade goes through
+  it with the same `If-Match` check the app uses (one retry after a `409`). Only when nothing
+  listens does it write `$PREP_PROGRESS` (default `progress.json`) directly, with the same
+  temp-file-and-rename as the server. An open tab picks the change up when you return to it.
+- An unknown key exits with code 2. A file or server it cannot read exits with code 1 and
+  writes nothing.
+
+Every grade, from the app or `grade.py`, records `kind` (`new`, `full`, or `quick`), and the first
+grade of a problem records `started`. Older entries without these fields keep working.
 
 ---
 
 ## 3. The tabs
 
-- **Due today** — your worklist for the session. A badge shows how many are due.
+- **Due today** — the Today card. The badge counts the reps still to do in today's window
+  (0 to 3), not the backlog. **Show all** lists the whole backlog.
 - **New** — the ~68 problems you haven't started yet, grouped by category (core first).
   Grading one for the first time pulls it into the rotation.
 - **All** — all 129 problems with every problem's current box and next-review date.
@@ -112,11 +143,13 @@ focused "just drill Two Pointers today" session).
 
 Across the top:
 
-- **Due today** — how many problems are scheduled for now.
+- **This week** — `New this week: N/2 · Reps this week: M`, Monday to Sunday. N counts
+  problems whose `started` date is this week; M counts the other problems graded this week. It
+  replaces the old due count on purpose: the week is the unit, not the pile.
 - **Solved locally** — how many of the 129 have a solution file in `patterns/` (60 as of the
   2026-08 sprint merge).
 - **Core solved** — your coverage of the 4 core categories (the interview bread-and-butter).
-- **Mastered (box 4)** — problems you've graded **Fast**; they're on the longest interval.
+- **Box 4 and up** — problems you've graded **Fast** at least once and not missed since.
 
 ---
 
@@ -153,6 +186,9 @@ are the fix. The governing principle: **when the stored data is in doubt, the ap
   **Discard**. Previously the mirror was written on every save and never read, so the first save
   after a server restart destroyed the only remaining copy.
 - **A refused localStorage write is surfaced**, not swallowed. Offline, that mirror is the only store.
+- **A tab reloads on focus.** When the tab becomes visible again and the file's revision moved
+  (`grade.py`, a `git pull`), the app takes the new file, but only if it has no save of its own
+  pending or in flight. If it has one, the next save gets the usual `409` and the halt panel.
 
 **After pulling these changes, restart the server and reload the page.** The client and server now
 speak a protocol the older versions do not: an old page against the new server gets `428` on every
