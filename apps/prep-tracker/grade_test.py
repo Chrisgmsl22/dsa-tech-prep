@@ -320,6 +320,37 @@ def test_server_that_refuses_the_read_is_an_error_not_a_file_write(monkeypatch, 
     assert not (tmp_path / "never-written.json").exists()
 
 
+def test_a_404_server_means_offline_so_the_file_is_written(monkeypatch, fixture_file):
+    """Something else on the port (python -m http.server answers 404): the app
+    treats that as offline, and so does grade.py."""
+    path, _ = fixture_file
+    stub = StubState(get_status=404)
+    server = stub_server(stub)
+    try:
+        monkeypatch.setenv("PORT", str(server.server_address[1]))
+        monkeypatch.setenv("PREP_PROGRESS", str(path))
+        assert grade.main(["two_pointers#3", "fail", "--date", "2026-10-12"]) == 0
+    finally:
+        server.shutdown()
+    assert stub.posts == []
+    assert json.loads(path.read_text())["two_pointers#3"]["box"] == 1
+
+
+def test_a_silent_server_is_an_error_and_the_file_is_left_alone(monkeypatch, fixture_file):
+    """A listener that never answers is a stuck server, not an absent one.
+    Writing the file behind it is what server.py's safety model forbids."""
+    path, _ = fixture_file
+    raw = path.read_bytes()
+    with socket.socket() as silent:
+        silent.bind(("127.0.0.1", 0))
+        silent.listen(1)                              # accepts the connection, never replies
+        monkeypatch.setattr(grade, "TIMEOUT", 0.3)
+        monkeypatch.setenv("PORT", str(silent.getsockname()[1]))
+        monkeypatch.setenv("PREP_PROGRESS", str(path))
+        assert grade.main(["two_pointers#3", "pass"]) == 1
+    assert path.read_bytes() == raw
+
+
 # ---------- server_test.py ----------
 
 def test_server_safety_script_passes():

@@ -31,6 +31,7 @@ FAILED, CLEAN, FAST = 1, 3, 4
 INTERVAL = {1: 1, 2: 3, 3: 7, 4: 21, 5: 45, 6: 120}
 
 FILE_MODE = 0o644  # match server.py: mkstemp makes 0600 and the rename keeps it
+TIMEOUT = 5         # seconds; a server that stays silent this long is stuck, not absent
 
 
 class GradeError(Exception):
@@ -98,7 +99,7 @@ def _server_url():
 def _server_get(url):
     """(state, etag), or None when no tracker server answers at `url`."""
     try:
-        with urllib.request.urlopen(url, timeout=3) as r:
+        with urllib.request.urlopen(url, timeout=TIMEOUT) as r:
             return json.loads(r.read()), r.headers.get("ETag")
     except urllib.error.HTTPError as e:
         # 404: something else serves this port (the app treats it as offline too).
@@ -127,7 +128,7 @@ def _server_post(url, state, etag):
         "If-Match": etag or "0",
     })
     try:
-        with urllib.request.urlopen(req, timeout=5):
+        with urllib.request.urlopen(req, timeout=TIMEOUT):
             return True
     except urllib.error.HTTPError as e:
         if e.code == 409:
