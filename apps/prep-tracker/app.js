@@ -586,10 +586,6 @@ const BEFORE_TODAY = {};
 function prog(p) {
   return STATE[id(p)] || { box: 0, due: null, last: null, attempts: 0, trigger: "" };
 }
-// grade.py writes the third kind, "quick".
-function gradeKind(entry) {
-  return (entry.attempts || 0) === 0 ? "new" : "full";
-}
 function isDue(p) {
   const st = prog(p);
   return st.box >= 1 && st.due && daysUntil(st.due) <= 0;
@@ -1358,21 +1354,10 @@ function gradeProblem(pid, grade) {
   const cur = STATE[pid] || { box: 0, due: null, last: null, attempts: 0, trigger: "" };
   if (cur.last !== today || !BEFORE_TODAY[pid]) BEFORE_TODAY[pid] = { ...cur };
   const base = cur.last === today ? BEFORE_TODAY[pid] : cur;
-  const kind = gradeKind(base);
-  const box = nextBox(base.box, grade, kind);
-  const graded = {
-    ...base,
-    box,
-    due: addDays(today, INTERVAL[box]),
-    last: today,
-    attempts: (base.attempts || 0) + 1,
+  STATE[pid] = {
+    ...applyGrade(base, grade, today, (box) => addDays(today, INTERVAL[box])),
     trigger: cur.trigger || "",
-    kind,
   };
-  // Only a first grade dates `started`. Stamping an older entry with today
-  // would count a months-old problem as new this week.
-  if (kind === "new" && !base.started) graded.started = today;
-  STATE[pid] = graded;
   saveState({ immediate: true }); // a grade is one discrete event — never debounce it
   // Stay open. The row relocates to "Done today" and keeps the note prompt on
   // screen; FOCUS_TRIGGER makes render() put the cursor in it.

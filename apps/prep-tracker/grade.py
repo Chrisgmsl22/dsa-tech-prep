@@ -68,7 +68,11 @@ def quick_grade(entry, result):
 
 
 def apply_grade(state, key, result, today):
-    """Return (old_box, new_entry). Does not mutate `state`."""
+    """Return (old_box, new_entry). Does not mutate `state`.
+
+    Never writes `started`: a quick rep is never a first attempt, and a
+    started date would count the problem as new this week (PRACTICE.md).
+    """
     entry = state.get(key)
     if not isinstance(entry, dict):
         raise GradeError(f"unknown key {key!r}: not in progress.json", code=2)
@@ -82,7 +86,6 @@ def apply_grade(state, key, result, today):
         attempts=(entry.get("attempts") or 0) + 1,
         kind="quick",
     )
-    new.setdefault("started", today.isoformat())
     return old_box, new
 
 

@@ -295,3 +295,52 @@ test("pickNewProblem: an untouched dp does not jump the queue", () => {
 test("pickNewProblem: returns null when everything is started", () => {
   assert.strictEqual(S.pickNewProblem(catalogOf({ stacks: [2, 2], dp: [1, 1] })), null);
 });
+
+// ---- grade kind and started (plan rev 3: "new" means box 0) ----
+
+const DAY = "2026-10-12";
+const dueFor = (box) => `+${box}`;
+const TRIAGE = { box: 2, due: "2026-09-01", last: null, attempts: 0, trigger: "" };
+const LEGACY = { box: 4, due: "2026-10-01", last: "2026-09-10", attempts: 2, trigger: "" };
+const UNSTARTED = { box: 0, due: null, last: null, attempts: 0, trigger: "" };
+
+test("gradeKind: only box 0 is new; triage and legacy entries are reps", () => {
+  assert.strictEqual(S.gradeKind(UNSTARTED), "new");
+  assert.strictEqual(S.gradeKind({}), "new");
+  assert.strictEqual(S.gradeKind(TRIAGE), "full");
+  assert.strictEqual(S.gradeKind(LEGACY), "full");
+});
+
+test("applyGrade: a grade from box 0 is new and dates started", () => {
+  const got = S.applyGrade(UNSTARTED, CLEAN, DAY, dueFor);
+  assert.deepStrictEqual(
+    [got.box, got.kind, got.started, got.attempts, got.last, got.due],
+    [3, "new", DAY, 1, DAY, "+3"]
+  );
+});
+
+test("applyGrade: a triage grade gets no started and is not new this week", () => {
+  for (const grade of [FAILED, SLOW, CLEAN, FAST]) {
+    const got = S.applyGrade(TRIAGE, grade, DAY, dueFor);
+    assert.strictEqual(got.kind, "full");
+    assert.ok(!("started" in got), `grade ${grade}`);
+    assert.deepStrictEqual(S.weeklyCounts([got], "2026-10-12", "2026-10-18"), { newCount: 0, reps: 1 });
+  }
+});
+
+test("applyGrade: a legacy grade gets no started, and Fast climbs from its box", () => {
+  const got = S.applyGrade(LEGACY, FAST, DAY, dueFor);
+  assert.deepStrictEqual([got.box, got.kind, got.attempts, got.due], [5, "full", 3, "+5"]);
+  assert.ok(!("started" in got));
+});
+
+test("applyGrade: keeps an existing started and every other field", () => {
+  const got = S.applyGrade({ ...LEGACY, started: "2026-01-05", note: "x" }, SLOW, DAY, dueFor);
+  assert.strictEqual(got.started, "2026-01-05");
+  assert.strictEqual(got.note, "x");
+});
+
+test("weeklyCounts: a grade.py quick rep (no started) counts as a rep", () => {
+  const quick = { ...TRIAGE, box: 3, last: DAY, attempts: 1, kind: "quick" };
+  assert.deepStrictEqual(S.weeklyCounts([quick], "2026-10-12", "2026-10-18"), { newCount: 0, reps: 1 });
+});

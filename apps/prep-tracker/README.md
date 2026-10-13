@@ -79,9 +79,9 @@ The **Due today** tab opens on the **Today card**, three steps in order:
    **week done** and shows no problem. The quota is weekly, so a missed day moves nothing.
 
 **Grading.** Click a problem and press one of the four buttons. Each sub-label is the
-PRACTICE.md "How to grade" check: the full-rep checks for a problem you have graded before,
-the new-problem checks for a first attempt. Each ends with the real next interval for that
-problem (Fast on a box 4 problem says `+45d`).
+PRACTICE.md "How to grade" check: the new-problem checks for a problem at box 0 (never
+attempted), the full-rep checks for everything else, triage included. Each ends with the
+real next interval for that problem (Fast on a box 4 problem says `+45d`).
 
 | Box | Reached by | Next review |
 | --- | --- | --- |
@@ -110,7 +110,8 @@ python3 apps/prep-tracker/grade.py stacks#1 pass --date 2026-10-12
 - `fail` → Failed (box 1). `pass` on a triage problem (box 2, never graded) → Clean (box 3).
   `pass` on box 4 and up → Fast as a quick rep (box 5 at most). Any other `pass` → Clean.
 - It writes `kind: "quick"`, adds 1 to `attempts`, sets `last` and `due`, keeps the trigger, and
-  sets `started` only if it is missing. It prints one line: `key: box 4 → 5, next due …`.
+  never writes `started`: a quick rep is always a rep, never a new problem. It prints one
+  line: `key: box 4 → 5, next due …`.
 - **Write path.** When the server answers on `localhost:${PORT:-8000}`, the grade goes through
   it with the same `If-Match` check the app uses (one retry after a `409`). Only when nothing
   listens does it write `$PREP_PROGRESS` (default `progress.json`) directly, with the same
@@ -118,8 +119,9 @@ python3 apps/prep-tracker/grade.py stacks#1 pass --date 2026-10-12
 - An unknown key exits with code 2. A file or server it cannot read exits with code 1 and
   writes nothing.
 
-Every grade, from the app or `grade.py`, records `kind` (`new`, `full`, or `quick`), and the first
-grade of a problem records `started`. Older entries without these fields keep working.
+Every grade, from the app or `grade.py`, records `kind` (`new`, `full`, or `quick`). Only an app
+grade from box 0 records `started`, so the 23 triage problems (box 2, never graded) and older
+entries count as reps, not new problems. Older entries without these fields keep working.
 
 ---
 

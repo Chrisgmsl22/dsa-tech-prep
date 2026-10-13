@@ -27,6 +27,25 @@ function nextBox(current, grade, kind) {
   return box;
 }
 
+/* Box 0, not attempts 0: the triage set sits at box 2 with 0 attempts, and
+ * those problems are solved already. Counting them as new would fill the
+ * weekly quota with reps. grade.py writes the third kind, "quick". */
+function gradeKind(entry) {
+  return (entry.box || 0) === 0 ? "new" : "full";
+}
+
+/* An app grade. `dueFor(box)` returns the due date, so this file stays free
+ * of Date. Only a grade from box 0 dates `started`; grade.py never does. */
+function applyGrade(base, grade, today, dueFor) {
+  const kind = gradeKind(base);
+  const box = nextBox(base.box, grade, kind);
+  const graded = {
+    ...base, box, due: dueFor(box), last: today, attempts: (base.attempts || 0) + 1, kind,
+  };
+  if (kind === "new" && !base.started) graded.started = today;
+  return graded;
+}
+
 /* Week tallies for the stat strip. Dates are ISO strings, so a plain string
  * compare is a date compare. A problem started this week counts once, as new,
  * even if it was also re-graded; everything else graded this week is a rep. */
@@ -190,6 +209,6 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     TIERS, TIER_SHARE, WINDOW_SIZE, INTERVAL, ROADMAP_CATEGORY, LAST_CATEGORY,
     largestRemainder, tierOf, isUrgent, comparePriority, selectWindow,
-    nextBox, weeklyCounts, pickNewProblem,
+    nextBox, gradeKind, applyGrade, weeklyCounts, pickNewProblem,
   };
 }

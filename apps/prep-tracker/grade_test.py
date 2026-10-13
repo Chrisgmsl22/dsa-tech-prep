@@ -124,9 +124,18 @@ def test_apply_writes_kind_last_due_and_increments_attempts():
     assert got["trigger"] == "note"
 
 
-def test_apply_sets_started_only_when_absent():
-    _, fresh = grade.apply_grade({"k#1": entry()}, "k#1", "fail", TODAY)
-    assert fresh["started"] == "2026-10-12"
+TRIAGE = {"box": 2, "due": "2026-09-01", "last": None, "attempts": 0, "trigger": ""}
+LEGACY = {"box": 4, "due": "2026-10-01", "last": "2026-09-10", "attempts": 2, "trigger": ""}
+
+
+@pytest.mark.parametrize("name,before", [("triage", TRIAGE), ("legacy", LEGACY)])
+@pytest.mark.parametrize("result", ["pass", "fail"])
+def test_apply_never_writes_started(name, before, result):
+    _, got = grade.apply_grade({"k#1": dict(before)}, "k#1", result, TODAY)
+    assert "started" not in got, f"{name} {result} must stay a rep, not a new problem"
+
+
+def test_apply_keeps_an_existing_started():
     _, kept = grade.apply_grade({"k#1": entry(started="2026-01-05")}, "k#1", "fail", TODAY)
     assert kept["started"] == "2026-01-05"
 
@@ -172,6 +181,7 @@ def test_cli_file_path_writes_atomically(fixture_file):
     after = json.loads(path.read_text())
     assert after["two_pointers#3"]["box"] == 5
     assert after["two_pointers#3"]["kind"] == "quick"
+    assert "started" not in after["two_pointers#3"], "a legacy entry stays a rep"
     assert after["stacks#1"] == before["stacks#1"]
     assert after["sprint#x"] == before["sprint#x"]
     assert oct(path.stat().st_mode)[-3:] == "644"
@@ -183,7 +193,8 @@ def test_cli_triage_pass_lands_in_box_3(fixture_file):
     r = run_cli(["stacks#1", "pass", "--date", "2026-10-12"], path, free_port())
     assert r.returncode == 0, r.stderr
     got = json.loads(path.read_text())["stacks#1"]
-    assert (got["box"], got["attempts"], got["started"], got["trigger"]) == (3, 1, "2026-10-12", "t")
+    assert (got["box"], got["attempts"], got["trigger"]) == (3, 1, "t")
+    assert "started" not in got
 
 
 def test_cli_unknown_key_exits_2_and_leaves_the_file(fixture_file):
