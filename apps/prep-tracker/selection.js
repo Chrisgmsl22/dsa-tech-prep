@@ -9,9 +9,37 @@
  * A "candidate" is a plain object: { key, cat, box, daysUntil }
  *   key       - stable id string, opaque here
  *   cat       - category slug, must be a key of some TIERS entry
- *   box       - Leitner box, 1..4
+ *   box       - Leitner box, 1..6
  *   daysUntil - days until due; NEGATIVE means overdue by that many days
  * ========================================================================== */
+
+// Leitner intervals (days) keyed by box. grade.py keeps a copy; change both.
+const INTERVAL = { 1: 1, 2: 3, 3: 7, 4: 21, 5: 45, 6: 120 };
+
+/* `grade` is the button: 1 Failed, 2 Slow, 3 Clean, 4 Fast. Only Fast climbs
+ * past box 4, one box at a time. A quick rep is a plan in words, not code, so
+ * it may keep box 6 but never earn it. grade.py's next_box() is the twin. */
+function nextBox(current, grade, kind) {
+  const cur = current || 0;
+  let box = grade;
+  if (grade === 4) box = cur < 4 ? 4 : Math.min(cur + 1, 6);
+  if (kind === "quick" && box === 6 && cur !== 6) box = 5;
+  return box;
+}
+
+/* Week tallies for the stat strip. Dates are ISO strings, so a plain string
+ * compare is a date compare. A problem started this week counts once, as new,
+ * even if it was also re-graded; everything else graded this week is a rep. */
+function weeklyCounts(entries, weekStart, weekEnd) {
+  const inWeek = (iso) => !!iso && iso >= weekStart && iso <= weekEnd;
+  let newCount = 0, reps = 0;
+  for (const e of entries) {
+    if (!e || typeof e !== "object") continue;
+    if (inWeek(e.started)) newCount++;
+    else if (inWeek(e.last)) reps++;
+  }
+  return { newCount, reps };
+}
 
 // Interview-frequency tiers. Tier 1 is what phone screens actually ask;
 // tier 2 is very common (tree traversal and binary search are not optional);
@@ -117,9 +145,51 @@ function selectWindow(candidates, windowSize) {
   return byPriority(picked);
 }
 
+/* The roadmap topic new problems alternate with. PRACTICE.md says "grids,
+ * then graphs"; grids problems live in the graphs category here. */
+const ROADMAP_CATEGORY = "graphs";
+const LAST_CATEGORY = "dp";
+
+/* PRACTICE.md "Order of new problems". `catalog` is [{ key, cat, started }] in
+ * catalog order. Parity of the started total alternates the two tracks with
+ * no stored state: even → roadmap, odd → thinnest tier-1 category. */
+function pickNewProblem(catalog) {
+  const unstarted = catalog.filter((p) => !p.started);
+  if (!unstarted.length) return null;
+
+  const total = {}, started = {}, order = [];
+  let startedTotal = 0;
+  for (const p of catalog) {
+    if (!(p.cat in total)) { total[p.cat] = 0; started[p.cat] = 0; order.push(p.cat); }
+    total[p.cat]++;
+    if (p.started) { started[p.cat]++; startedTotal++; }
+  }
+  // Ratio, not raw count: stacks at 4/5 is nearly done, hashmaps at 4/12 is not.
+  const coverage = (c) => started[c] / total[c];
+  const firstIn = (c) => unstarted.find((p) => p.cat === c) || null;
+  const byTierThenCoverage = (a, b) =>
+    tierOf(a) - tierOf(b) || coverage(a) - coverage(b) || order.indexOf(a) - order.indexOf(b);
+
+  const untouched = unstarted.find((p) => p.cat !== LAST_CATEGORY && started[p.cat] === 0);
+  if (untouched) return untouched;
+
+  const thinnestTier1 = order
+    .filter((c) => tierOf(c) === 1)
+    .sort(byTierThenCoverage)[0];
+  const chosen = startedTotal % 2 === 0 ? ROADMAP_CATEGORY : thinnestTier1;
+  const pick = chosen && chosen !== LAST_CATEGORY ? firstIn(chosen) : null;
+  if (pick) return pick;
+
+  const fallback = order
+    .filter((c) => c !== LAST_CATEGORY && firstIn(c))
+    .sort(byTierThenCoverage)[0];
+  return fallback ? firstIn(fallback) : firstIn(LAST_CATEGORY);
+}
+
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    TIERS, TIER_SHARE, WINDOW_SIZE,
+    TIERS, TIER_SHARE, WINDOW_SIZE, INTERVAL, ROADMAP_CATEGORY, LAST_CATEGORY,
     largestRemainder, tierOf, isUrgent, comparePriority, selectWindow,
+    nextBox, weeklyCounts, pickNewProblem,
   };
 }

@@ -168,3 +168,130 @@ test("selectWindow never mutates its input array", () => {
   S.selectWindow(pool, 5);
   assert.deepStrictEqual(pool.map((x) => x.key), before);
 });
+
+// ---- boxes 5 and 6 ----
+
+const FAILED = 1, SLOW = 2, CLEAN = 3, FAST = 4;
+
+test("INTERVAL covers boxes 1 to 6", () => {
+  assert.deepStrictEqual(S.INTERVAL, { 1: 1, 2: 3, 3: 7, 4: 21, 5: 45, 6: 120 });
+});
+
+test("nextBox: Fast climbs one box from 4, jumps to 4 from below, holds at 6", () => {
+  const expected = { 0: 4, 1: 4, 2: 4, 3: 4, 4: 5, 5: 6, 6: 6 };
+  for (let cur = 0; cur <= 6; cur++) {
+    assert.strictEqual(S.nextBox(cur, FAST, "full"), expected[cur], `box ${cur}`);
+  }
+});
+
+test("nextBox: Failed, Slow and Clean set box 1, 2, 3 from every box", () => {
+  for (let cur = 0; cur <= 6; cur++) {
+    assert.strictEqual(S.nextBox(cur, FAILED, "full"), 1, `Failed from ${cur}`);
+    assert.strictEqual(S.nextBox(cur, SLOW, "full"), 2, `Slow from ${cur}`);
+    assert.strictEqual(S.nextBox(cur, CLEAN, "quick"), 3, `Clean from ${cur}`);
+  }
+});
+
+test("nextBox: a missing current box counts as box 0", () => {
+  assert.strictEqual(S.nextBox(undefined, FAST, "new"), 4);
+});
+
+test("nextBox: a quick rep cannot promote to box 6", () => {
+  assert.strictEqual(S.nextBox(5, FAST, "quick"), 5);
+  assert.strictEqual(S.nextBox(4, FAST, "quick"), 5);
+  assert.strictEqual(S.nextBox(6, FAST, "quick"), 6, "box 6 stays 6");
+  assert.strictEqual(S.nextBox(6, FAILED, "quick"), 1);
+});
+
+// ---- weekly line ----
+
+test("weeklyCounts: started this week is new, other grades this week are reps", () => {
+  const entries = [
+    { started: "2026-10-12", last: "2026-10-13" },  // new, re-graded: counts once, as new
+    { started: "2026-10-18", last: "2026-10-18" },  // Sunday: still this week
+    { started: "2026-10-05", last: "2026-10-14" },  // started last week: a rep
+    { last: "2026-10-12" },                         // legacy entry, no started: a rep
+    { last: "2026-10-11" },                         // last Sunday: outside
+    { started: "2026-10-19", last: "2026-10-19" },  // next Monday: outside
+    { status: "done", trigger: "" },                // sprint entry: ignored
+    null,
+  ];
+  assert.deepStrictEqual(
+    S.weeklyCounts(entries, "2026-10-12", "2026-10-18"),
+    { newCount: 2, reps: 2 }
+  );
+});
+
+// ---- new-problem order ----
+
+/* Builds a catalog from { cat: [startedCount, totalCount] } in the given
+ * order. Keys are `${cat}#${n}` and the started ones come first. */
+function catalogOf(spec) {
+  const out = [];
+  for (const [cat, [done, total]] of Object.entries(spec)) {
+    for (let n = 1; n <= total; n++) out.push({ key: `${cat}#${n}`, cat, started: n <= done });
+  }
+  return out;
+}
+
+test("pickNewProblem: a category with nothing started comes first, in catalog order", () => {
+  const catalog = catalogOf({
+    arrays_and_strings: [2, 5], graphs: [1, 5], greedy: [0, 4], sorting: [0, 1], dp: [1, 5],
+  });
+  assert.strictEqual(S.pickNewProblem(catalog).key, "greedy#1");
+});
+
+test("pickNewProblem: an even started total picks the roadmap category", () => {
+  const catalog = catalogOf({
+    arrays_and_strings: [1, 5], hashmaps_and_sets: [1, 4], graphs: [1, 5], dp: [1, 5],
+  });
+  assert.strictEqual(S.ROADMAP_CATEGORY, "graphs");
+  assert.strictEqual(S.pickNewProblem(catalog).key, "graphs#2");
+});
+
+test("pickNewProblem: an odd started total picks the thinnest tier-1 category", () => {
+  const catalog = catalogOf({
+    arrays_and_strings: [2, 5], hashmaps_and_sets: [1, 4], graphs: [1, 5], dp: [1, 5],
+  });
+  // 5 started → odd. arrays 2/5 = 0.4, hashmaps 1/4 = 0.25 → hashmaps.
+  assert.strictEqual(S.pickNewProblem(catalog).key, "hashmaps_and_sets#2");
+});
+
+test("pickNewProblem: alternates as the started total changes", () => {
+  const catalog = catalogOf({
+    arrays_and_strings: [1, 5], hashmaps_and_sets: [1, 4], graphs: [1, 5], dp: [1, 5],
+  });
+  const first = S.pickNewProblem(catalog);
+  assert.strictEqual(first.cat, "graphs");
+  first.started = true;
+  assert.strictEqual(S.pickNewProblem(catalog).cat, "arrays_and_strings",
+    "odd now: arrays at 0.2 is thinner than hashmaps at 0.25");
+});
+
+test("pickNewProblem: an exhausted pick falls back by tier, then coverage", () => {
+  const catalog = catalogOf({
+    stacks: [2, 2], trees: [1, 4], linked_lists: [1, 2], heaps: [1, 6], graphs: [3, 3], dp: [1, 5],
+  });
+  // 9 started → odd → tier-1 pick is stacks, which is full. Tier 2 next:
+  // trees 0.25 beats linked_lists 0.5.
+  assert.strictEqual(S.pickNewProblem(catalog).key, "trees#2");
+  // Even → graphs, also full. Same fallback.
+  catalog.find((p) => p.key === "heaps#2").started = true;
+  assert.strictEqual(S.pickNewProblem(catalog).key, "trees#2");
+});
+
+test("pickNewProblem: dp comes last, even when it is the thinnest", () => {
+  const catalog = catalogOf({ stacks: [1, 2], graphs: [2, 2], dp: [1, 14] });
+  assert.strictEqual(S.pickNewProblem(catalog).key, "stacks#2");
+  catalog.find((p) => p.key === "stacks#2").started = true;
+  assert.strictEqual(S.pickNewProblem(catalog).key, "dp#2");
+});
+
+test("pickNewProblem: an untouched dp does not jump the queue", () => {
+  const catalog = catalogOf({ graphs: [1, 3], dp: [0, 3] });
+  assert.strictEqual(S.pickNewProblem(catalog).cat, "graphs");
+});
+
+test("pickNewProblem: returns null when everything is started", () => {
+  assert.strictEqual(S.pickNewProblem(catalogOf({ stacks: [2, 2], dp: [1, 1] })), null);
+});
