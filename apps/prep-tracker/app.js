@@ -9,8 +9,13 @@
  *   box 1  failed / needed solution   -> review in  1 day
  *   box 2  solved slow / with hints   -> review in  3 days
  *   box 3  solved clean               -> review in  7 days
- *   box 4  fast & confident           -> review in 21 days   (mastered)
+ *   box 4  fast & confident           -> review in 21 days
+ *   box 5  Fast again from box 4      -> review in 45 days
+ *   box 6  Fast again from box 5      -> review in 120 days
  *   box 0  never attempted (new)      -> not scheduled
+ *
+ * The rules (grades, boxes, new-problem order) live in PRACTICE.md at the
+ * repo root; INTERVAL and nextBox() are in selection.js.
  *
  * `s: true`  => a solution file already exists in this repo (seeded into
  *               review rotation, staggered so only a few come due per day).
@@ -205,16 +210,23 @@ const PROBLEMS = [
   { cat: "sorting", n: 1, title: "Sort an Array",                          s: false },
 ];
 
-// Leitner intervals (days) keyed by box.
-const INTERVAL = { 1: 1, 2: 3, 3: 7, 4: 21 };
-// Sub-labels are anchored to the time-box protocol in CLAUDE.md so that
-// self-grading is a measurement rather than a mood.
+// Sub-labels are the "How to grade" checks in PRACTICE.md, so that
+// self-grading is a measurement rather than a mood. A first attempt has a
+// 60-minute cap and a full rep 35, so the two sets of checks differ.
 const GRADES = [
-  { box: 1, cls: "g1", label: "Failed",  sub: "hit the cap / read the solution · +1d" },
-  { box: 2, cls: "g2", label: "Slow",    sub: "needed a hint, or >40 min · +3d" },
-  { box: 3, cls: "g3", label: "Clean",   sub: "solved unaided, under ~30 min · +7d" },
-  { box: 4, cls: "g4", label: "Fast",    sub: "under ~15 min, no stumbles · +21d" },
+  { box: 1, cls: "g1", label: "Failed",
+    full: "no pass at 35 min, or saw the solution", new: "read the solution, or hit 60 min" },
+  { box: 2, cls: "g2", label: "Slow",
+    full: "hint, 26–35 min, or 3+ wrong submits",   new: "pattern hint, or >40 min" },
+  { box: 3, cls: "g3", label: "Clean",
+    full: "no hint, 16–25 min",                     new: "no hint, 21–40 min" },
+  { box: 4, cls: "g4", label: "Fast",
+    full: "no hint, ≤15 min",                       new: "no hint, ≤20 min" },
 ];
+// Boxes 5 and 6 are only reachable through Fast, so they wear its label.
+function gradeOf(box) { return GRADES.find((g) => g.box === Math.min(box, 4)); }
+const NEW_PER_WEEK = 2;   // PRACTICE.md "The week": target 2, stretch 3
+const NEW_STRETCH = 3;
 const NEW_PER_DAY_SEED = 3; // stagger solved problems so ~3 come due per day
 
 const STORE_KEY = "srt.v1";
@@ -240,6 +252,12 @@ function daysUntil(iso) {
   const a = new Date(todayISO() + "T00:00:00");
   const b = new Date(iso + "T00:00:00");
   return Math.round((b - a) / 86400000);
+}
+// Monday to Sunday, local time. getDay() is 0 on Sunday, so Sunday steps back 6.
+function weekBounds(iso) {
+  const dow = new Date(iso + "T00:00:00").getDay();
+  const monday = addDays(iso, -((dow + 6) % 7));
+  return { start: monday, end: addDays(monday, 6) };
 }
 function id(p) { return p.cat + "#" + p.n; }
 function catRank(cat) {
@@ -303,6 +321,8 @@ let saveTimer = null;
 let HALT = null;        // {title, detail} -- load failure, or this tab is stale
 let LOCAL_AHEAD = null; // {keys, mirror} -- this browser holds work the file lacks
 let REVISION = null;    // ETag of the progress file this tab loaded
+let postsInFlight = 0;
+let localEdits = 0;     // bumped on every save, so a refresh can tell it raced one
 
 function isHalted() { return HALT !== null || LOCAL_AHEAD !== null; }
 
@@ -406,6 +426,7 @@ async function loadProgress() {
 
 function postState() {
   saveTimer = null;
+  postsInFlight++;
   return fetch(API, {
     method: "POST",
     headers: { "Content-Type": "application/json", "If-Match": REVISION || "*" },
@@ -431,7 +452,8 @@ function postState() {
     })
     // Previously `.catch(() => {})` — a dead server meant every grade looked
     // saved and silently wasn't. You'd only find out at `git status`, or never.
-    .catch(() => setFootNote(false));
+    .catch(() => setFootNote(false))
+    .finally(() => { postsInFlight--; });
 }
 
 /* `immediate` skips the debounce. Only textarea typing needs debouncing;
@@ -440,6 +462,7 @@ function postState() {
  * overwrites localStorage with the stale file and the grade is gone for good. */
 function saveState(opts) {
   if (isHalted()) return; // never write while the stored data is in doubt
+  localEdits++;
   // Always mirror locally so an offline reload still has the latest.
   try {
     localStorage.setItem(
@@ -476,6 +499,34 @@ window.addEventListener("beforeunload", () => {
     });
   } catch (_) { /* nothing left to try at teardown */ }
 });
+
+/* grade.py writes the file while this tab sits in the background, so pick its
+ * grade up on return. Only when this tab has nothing of its own to send:
+ * otherwise the next save's 409 is the correct outcome, and it halts. */
+async function refreshIfChanged() {
+  const busy = () => isHalted() || saveTimer !== null || postsInFlight > 0;
+  if (!SERVER_MODE || busy()) return;
+  const editsBefore = localEdits;
+  let r, data;
+  try {
+    r = await fetch(API, { cache: "no-store" });
+    if (!r.ok) return; // a broken file surfaces on the next save, not here
+    data = await r.json();
+  } catch (_) {
+    return;
+  }
+  const etag = r.headers.get("ETag");
+  if (!etag || etag === REVISION) return;
+  if (!data || typeof data !== "object" || Array.isArray(data)) return;
+  if (busy() || localEdits !== editsBefore) return; // a grade landed mid-fetch
+  STATE = data;
+  REVISION = etag;
+  render();
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") refreshIfChanged();
+});
+window.addEventListener("focus", refreshIfChanged);
 
 /* Seed any solved problem that has no progress yet: put it in box 2 with a
  * staggered due date so the initial review load is ~NEW_PER_DAY_SEED per day.
@@ -526,10 +577,18 @@ let CAT_FILTER = "all";
 let OPEN_ID = null;
 let SHOW_ALL = false; // session-only Due-view override; not persisted
 let FOCUS_TRIGGER = false; // one-shot: focus the note field after the next render
+/* Each entry as it was before today's first grade. A re-grade ("graded it
+ * wrong?") must start from there: Fast now climbs from the current box, so
+ * re-clicking Fast would otherwise climb twice. Session-only on purpose. */
+const BEFORE_TODAY = {};
 
 /* ---------- derived helpers ---------- */
 function prog(p) {
   return STATE[id(p)] || { box: 0, due: null, last: null, attempts: 0, trigger: "" };
+}
+// grade.py writes the third kind, "quick".
+function gradeKind(entry) {
+  return (entry.attempts || 0) === 0 ? "new" : "full";
 }
 function isDue(p) {
   const st = prog(p);
@@ -642,15 +701,33 @@ function exportProgress() {
   setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 0);
 }
 
+/* Problems still to do in today's rep window. The window refills as you grade,
+ * so the badge counts down from today's reps instead, and the backlog total
+ * stays hidden: it measured the pile, not the day. New problems and quick reps
+ * have their own steps on the Today card, so they do not count here. */
+function repsLeftToday() {
+  const today = todayISO();
+  const windowLen = selectWindow(dueCandidates(PROBLEMS.filter(isDue)), WINDOW_SIZE).length;
+  const repsDone = PROBLEMS.filter((p) => {
+    const st = prog(p);
+    return isDoneToday(p) && st.started !== today && st.kind !== "quick";
+  }).length;
+  return Math.max(0, Math.min(windowLen, WINDOW_SIZE - repsDone));
+}
+
+function thisWeek() {
+  const { start, end } = weekBounds(todayISO());
+  return weeklyCounts(Object.values(STATE), start, end);
+}
+
 function renderStats() {
-  const dueCount = PROBLEMS.filter(isDue).length;
   const solvedCount = PROBLEMS.filter((p) => p.s).length;
   const coreTotal = PROBLEMS.filter((p) => CORE.has(p.cat)).length;
   const coreSolved = PROBLEMS.filter((p) => CORE.has(p.cat) && p.s).length;
-  const mastered = PROBLEMS.filter((p) => prog(p).box === 4).length;
+  const mastered = PROBLEMS.filter((p) => prog(p).box >= 4).length;
   const sprintDone = SPRINT.filter((s) => sprog(s).status === "done").length;
 
-  dueBadge.textContent = dueCount;
+  dueBadge.textContent = repsLeftToday();
   sprintBadge.textContent = sprintDone;
 
   // The sprint answers a different question from the rotation: not "how deep is
@@ -669,11 +746,14 @@ function renderStats() {
     return;
   }
 
+  const week = thisWeek();
   statsEl.innerHTML = [
-    stat("due", dueCount, "due today"),
+    stat("due stat--week",
+      `New this week: ${week.newCount}/${NEW_PER_WEEK} · Reps this week: ${week.reps}`,
+      "Monday to Sunday"),
     stat("solved", `${solvedCount}/${PROBLEMS.length}`, "solved locally"),
     stat("core", `${coreSolved}/${coreTotal}`, "core solved"),
-    stat("", mastered, "mastered (box 4)"),
+    stat("", mastered, "box 4 and up"),
   ].join("");
 }
 function stat(mod, num, label) {
@@ -713,23 +793,32 @@ function visibleProblems() {
   return items;
 }
 
-/* Header strip above the Due list. Shows how much of the real backlog is
- * hidden, plus today's grading count — derived from the `last` field that
- * gradeProblem() already writes, so this adds no persisted state. */
+/* Header strip above the Due list, plus today's grading count — derived from
+ * the `last` field that gradeProblem() already writes. The backlog total shows
+ * only after "Show all": by default the day is the unit, not the pile. */
 function windowNoteHTML(shown, total) {
-  const gradedToday = Object.values(STATE).filter((s) => s.last === todayISO()).length;
-  const hidden = total - shown;
+  const gradedToday = Object.values(STATE).filter((s) => s && s.last === todayISO()).length;
   let toggle = "";
   if (SHOW_ALL) {
     toggle = `<button class="ghost" id="windowToggle">Show window</button>`;
-  } else if (hidden > 0) {
-    toggle = `<button class="ghost" id="windowToggle">Show all ${total}</button>`;
+  } else if (total > shown) {
+    toggle = `<button class="ghost" id="windowToggle">Show all</button>`;
   }
+  let scope = `<strong>${repsLeftToday()}</strong> of ${WINDOW_SIZE} reps left today`;
+  if (SHOW_ALL) scope = `Showing all <strong>${total}</strong> due`;
+  else if (CAT_FILTER !== "all") scope = `Showing <strong>${shown}</strong> in this category`;
   return (
     `<div class="window-note">` +
-    `<span>Showing <strong>${shown}</strong> of ${total} due · ` +
-    `<strong>${gradedToday}</strong> graded today</span>${toggle}</div>`
+    `<span>${scope} · <strong>${gradedToday}</strong> graded today</span>${toggle}</div>`
   );
+}
+
+// The plain shape selection.js expects, with a back-reference to the problem.
+function dueCandidates(problems) {
+  return problems.map((p) => {
+    const st = prog(p);
+    return { key: id(p), cat: p.cat, box: st.box, daysUntil: daysUntil(st.due), problem: p };
+  });
 }
 
 function renderList() {
@@ -745,12 +834,7 @@ function renderList() {
   const items = visibleProblems();
 
   if (VIEW === "due") {
-    // Project each problem into the plain shape selection.js expects, keeping
-    // a back-reference so we can render the original record afterwards.
-    const candidates = items.map((p) => {
-      const st = prog(p);
-      return { key: id(p), cat: p.cat, box: st.box, daysUntil: daysUntil(st.due), problem: p };
-    });
+    const candidates = dueCandidates(items);
 
     let picked;
     if (SHOW_ALL) {
@@ -767,12 +851,13 @@ function renderList() {
       .sort((a, b) => catRank(a.cat) - catRank(b.cat) || a.n - b.n);
 
     const body = picked.length
-      ? picked.map((x) => rowHTML(x.problem)).join("")
+      ? picked.map((x) => rowHTML(x.problem, { hideCat: true })).join("")
       : `<p class="empty">${emptyMessage()}</p>`;
+    const reps = windowNoteHTML(picked.length, candidates.length) + body;
 
+    // A filtered view is a focused drill, not the daily plan.
     listEl.innerHTML =
-      windowNoteHTML(picked.length, candidates.length) + body +
-      doneSectionHTML(done) + growSectionHTML();
+      (CAT_FILTER === "all" ? todayCardHTML(reps) : reps) + doneSectionHTML(done);
     return;
   }
 
@@ -803,71 +888,58 @@ function renderList() {
     .join("");
 }
 
-/* One new problem to grow the list, chosen deliberately rather than at random.
- *
- * Order: interview-frequency tier first, then the category you have covered
- * LEAST, then catalog order. Tier leads because coverage of a rare pattern is
- * worth less than coverage of a common one -- greedy at 0/4 is a real gap, but
- * it is tier 3, and a phone screen asks tier 1.
- *
- * Deterministic on purpose: no Math.random(), so it does not reshuffle while you
- * are looking at it. It changes when you actually start something. */
+/* The order rule lives in selection.js. Catalog order is PROBLEMS order, so
+ * "the first unstarted problem" means the same thing in both files. */
 function suggestNewProblem() {
-  const unstarted = PROBLEMS.filter((p) => !p.s && prog(p).box === 0);
-  if (!unstarted.length) return null;
-
-  const started = {}, total = {};
-  for (const p of PROBLEMS) {
-    total[p.cat] = (total[p.cat] || 0) + 1;
-    if (p.s || prog(p).box >= 1) started[p.cat] = (started[p.cat] || 0) + 1;
-  }
-  // Ratio, not raw count: stacks at 4/5 is nearly done, hashmaps at 4/12 is not.
-  const coverage = (c) => (started[c] || 0) / total[c];
-
-  return unstarted.slice().sort((a, b) =>
-    tierOf(a.cat) - tierOf(b.cat) ||
-    coverage(a.cat) - coverage(b.cat) ||
-    catRank(a.cat) - catRank(b.cat) ||
-    a.n - b.n
-  )[0];
+  const catalog = PROBLEMS.map((p) => ({
+    key: id(p), cat: p.cat, started: p.s || prog(p).box >= 1, problem: p,
+  }));
+  const pick = pickNewProblem(catalog);
+  return pick ? pick.problem : null;
 }
 
-/* The growth half of the daily plan: 3 reps + 1 new problem when there is time.
- * It lives in the Due view because the reps must not be the only thing on
- * screen -- that makes growth the thing you have to remember, and it stops
- * happening. Retention keeps what you have; this is what adds to it. */
-function growSectionHTML() {
-  // A filtered view is a focused drill, not the daily plan.
-  if (CAT_FILTER !== "all") return "";
-
-  // attempts === 1 means a first-ever attempt, so this fires only for a problem
-  // started today -- not for a rep of something already in rotation.
-  const startedToday = PROBLEMS.find((p) => isDoneToday(p) && prog(p).attempts === 1);
-  if (startedToday) {
-    return (
-      `<div class="group__head grow__head">` +
-        `<h2>+ Grow</h2>` +
-        `<span class="group__count">✓ you started something new today</span>` +
+/* The day in PRACTICE.md order: the floor first (one quick rep keeps the
+ * streak), then the reps, then growth. Growth lives here, not only in the New
+ * tab, because a step you have to remember is a step that stops happening. */
+function todayCardHTML(repsHTML) {
+  const today = todayISO();
+  const quickDone = Object.values(STATE).some((s) => s && s.kind === "quick" && s.last === today);
+  return (
+    `<section class="today">` +
+      `<div class="today__step${quickDone ? " is-done" : ""}">` +
+        `<span class="today__num">${quickDone ? "✓" : "1"}</span>` +
+        `<span>Start with a quick rep: run <code>/quick-rep</code> in Claude Code (10 min)</span>` +
       `</div>` +
-      `<p class="grow__hint">That is the growth half done. More is optional — ` +
-      `tomorrow's reps are what compound.</p>`
-    );
-  }
+      `<div class="today__step"><span class="today__num">2</span><span>Reps</span></div>` +
+      repsHTML +
+      newStepHTML() +
+    `</section>`
+  );
+}
+
+/* Step 3. The quota is weekly, so a missed day moves nothing. A third problem
+ * is a stretch, not the target, and past it the week is done: more new
+ * problems would starve the reps that keep the first ones. */
+function newStepHTML() {
+  const n = thisWeek().newCount;
+  let status = `this week: ${n}/${NEW_PER_WEEK}`;
+  if (n >= NEW_STRETCH) status += " · week done";
+  else if (n >= NEW_PER_WEEK) status += " · stretch";
+
+  const head =
+    `<div class="today__step today__step--new">` +
+      `<span class="today__num">3</span><span>New problem</span>` +
+      `<span class="group__count">${status}</span>` +
+    `</div>`;
+  if (n >= NEW_STRETCH) return head;
 
   const p = suggestNewProblem();
-  if (!p) return `<div class="group__head grow__head"><h2>+ Grow</h2>` +
-                 `<span class="group__count">every problem started 🎉</span></div>`;
-
+  if (!p) return head + `<p class="grow__hint">Every problem is started 🎉</p>`;
   return (
-    `<div class="group__head grow__head">` +
-      `<h2>+ Grow — one new problem</h2>` +
-      `<span class="group__count">${CAT_META[p.cat].label} · your thinnest tier-${tierOf(p.cat)} category</span>` +
-    `</div>` +
-    rowHTML(p) +
-    `<p class="grow__hint">Give it the full 60-minute cap. If it does not land, grade it ` +
-    `<strong>Failed</strong> — it joins the rotation tomorrow like anything else, and that is a ` +
-    `finished session, not a failed one. Short on time? Skip it. The reps above are the part ` +
-    `that happens every day.</p>`
+    head +
+    rowHTML(p, { hideCat: true }) +
+    `<p class="grow__hint">60-minute cap. If it does not land, grade it <strong>Failed</strong>: ` +
+    `it joins the rotation tomorrow, and that is a finished session.</p>`
   );
 }
 
@@ -897,17 +969,24 @@ function emptyMessage() {
   return "No problems match this filter.";
 }
 
-function rowHTML(p) {
+/* `hideCat`: the Due window hides the category until the problem is graded
+ * today, because spotting the pattern is part of the rep. The file path in
+ * the panel names the category too, so it hides with it. */
+function rowHTML(p, opts) {
   const st = prog(p);
   const pid = id(p);
   const open = pid === OPEN_ID ? " is-open" : "";
   const solved = p.s ? " is-solved" : "";
   const doneToday = isDoneToday(p);
   const doneCls = doneToday ? " is-done" : "";
+  const hideCat = !!(opts && opts.hideCat) && !doneToday;
+  const cat = doneToday
+    ? `<span class="row__cat">${CAT_META[p.cat].glyph} ${CAT_META[p.cat].label}</span>`
+    : "";
 
   let meta = "";
   if (doneToday) {
-    const g = GRADES.find((x) => x.box === st.box);
+    const g = gradeOf(st.box);
     const noteCls = (st.trigger || "").trim() ? "" : " needs-note";
     meta =
       `<span class="row__meta is-graded${noteCls}">` +
@@ -930,24 +1009,32 @@ function rowHTML(p) {
         `<span class="row__box"></span>` +
         `<span class="row__num">${p.n}</span>` +
         `<span class="row__title">${p.title}</span>` +
-        `${meta}` +
+        `${cat}${meta}` +
       `</div>` +
-      `<div class="row__panel">${panelHTML(p, st)}</div>` +
+      `<div class="row__panel">${panelHTML(p, st, hideCat)}</div>` +
     `</div>`
   );
 }
 
-function panelHTML(p, st) {
+/* Sub-labels and intervals describe what THIS click would do. A re-grade
+ * starts from the entry as it was before today's first grade, exactly as
+ * gradeProblem() does, so the Fast interval shown is the one you get. */
+function panelHTML(p, st, hideCat) {
   const gradedToday = isDoneToday(p);
-  const grades = GRADES.map(
-    (g) =>
-      `<button class="grade ${g.cls}${gradedToday && g.box === st.box ? " is-chosen" : ""}" ` +
-      `data-grade="${g.box}">${g.label}<small>${g.sub}</small></button>`
-  ).join("");
+  const base = (gradedToday && BEFORE_TODAY[id(p)]) || st;
+  const kind = gradeKind(base);
+  const grades = GRADES.map((g) => {
+    const days = INTERVAL[nextBox(base.box, g.box, kind)];
+    const chosen = gradedToday && g.box === Math.min(st.box, 4) ? " is-chosen" : "";
+    return (
+      `<button class="grade ${g.cls}${chosen}" data-grade="${g.box}">` +
+      `${g.label}<small>${g[kind]} · +${days}d</small></button>`
+    );
+  }).join("");
 
-  const src = p.f
-    ? `<p class="history">📄 <code>${p.f}</code></p>`
-    : `<p class="history">No local file yet — this is a fresh problem.</p>`;
+  let src = `<p class="history">No local file yet — this is a fresh problem.</p>`;
+  if (p.f && hideCat) src = `<p class="history">📄 file path shows after you grade it</p>`;
+  else if (p.f) src = `<p class="history">📄 <code>${p.f}</code></p>`;
 
   const hist =
     st.attempts > 0
@@ -960,7 +1047,7 @@ function panelHTML(p, st) {
   // old flow put it below the grade buttons, which dismissed the panel, so it
   // was unreachable in normal use (56 of 57 problems ended up with no note).
   if (gradedToday) {
-    const g = GRADES.find((x) => x.box === st.box);
+    const g = gradeOf(st.box);
     return (
       `<p class="panel__confirm">✓ Graded <strong>${g ? g.label : "?"}</strong>` +
       ` · next review in ${daysUntil(st.due)} days</p>` +
@@ -1141,14 +1228,16 @@ const HELP_HTML = `
   <h2>How this tracker works</h2>
   <p>Two evidence-backed techniques run this: <strong>active recall</strong> (solve blind — struggling is the learning) and <strong>spaced repetition</strong> (revisit each problem at growing intervals, right before you'd forget it).</p>
 
-  <h3>The daily loop</h3>
+  <p>The rules (rep types, how to grade, boxes, the order of new problems) live in <code>PRACTICE.md</code> at the repo root. This page is the short version.</p>
+
+  <h3>The Today card</h3>
   <ul>
-    <li>Open the <strong>Due today</strong> tab. These are the problems the schedule wants you to revisit.</li>
-    <li>Pick one, open your editor, and solve it <em>from scratch</em> — no peeking. Time-box ~25 min.</li>
-    <li>Come back, click the problem, and <strong>grade honestly</strong>. The grade sets when you see it next.</li>
-    <li>Write the <strong>trigger sentence</strong> — the cue that unlocks the pattern. That's the part that transfers.</li>
-    <li>When the due list is short, pull one from <strong>New</strong> (core categories are marked <span style="color:#6c9cff">★</span>).</li>
+    <li><strong>1. Quick rep.</strong> Run <code>/quick-rep</code> in Claude Code (10 min). It ticks itself when a quick-rep grade lands today. On a rough day this alone is a win.</li>
+    <li><strong>2. Reps.</strong> Up to 3 problems from the schedule. Solve each <em>blind</em>, then click it and <strong>grade honestly</strong>. The category stays hidden until you grade: spotting the pattern is part of the rep.</li>
+    <li><strong>3. New problem.</strong> The next one in the PRACTICE.md order. Target 2 a week, a 3rd is a stretch, then the week is done.</li>
+    <li>Write the <strong>trigger sentence</strong> after each grade — the cue that unlocks the pattern. That's the part that transfers.</li>
   </ul>
+  <p>The stat strip shows the week (Monday to Sunday), not the backlog: new problems started and reps graded. <strong>Show all</strong> in the Due tab still lists the whole backlog.</p>
 
   <h3>The Leitner boxes</h3>
   <table>
@@ -1156,8 +1245,14 @@ const HELP_HTML = `
     <tr><td><span class="dot" style="background:#f4726a"></span>Failed</td><td>1</td><td>tomorrow</td></tr>
     <tr><td><span class="dot" style="background:#f4b942"></span>Slow / hints</td><td>2</td><td>3 days</td></tr>
     <tr><td><span class="dot" style="background:#4fe0c0"></span>Clean</td><td>3</td><td>1 week</td></tr>
-    <tr><td><span class="dot" style="background:#6c9cff"></span>Fast</td><td>4</td><td>3 weeks (mastered)</td></tr>
+    <tr><td><span class="dot" style="background:#6c9cff"></span>Fast</td><td>4</td><td>3 weeks</td></tr>
+    <tr><td><span class="dot" style="background:#b48cff"></span>Fast again from box 4</td><td>5</td><td>45 days</td></tr>
+    <tr><td><span class="dot" style="background:#e8d48a"></span>Fast again from box 5</td><td>6</td><td>120 days</td></tr>
   </table>
+  <p>You never pick box 5 or 6: Fast climbs one box at a time from box 4, and any other grade sets that grade's box. A quick rep can hold box 6 but never earn it.</p>
+
+  <h3>Quick-rep grades from the terminal</h3>
+  <p><code>python3 apps/prep-tracker/grade.py &lt;key&gt; pass|fail [--date YYYY-MM-DD]</code> records a quick-rep result, for example <code>grade.py two_pointers#3 pass</code>. It writes through the running server when there is one, else straight to the file. This tab picks the change up when you come back to it.</p>
 
   <h3>The mix</h3>
   <p>Your solved problems (📄 = a file already exists in this repo) were seeded into rotation and staggered so only ~3 come due per day — that's your <strong>retention</strong> work. Drip in a new problem whenever you have appetite — that's your <strong>growth</strong>. Weak buckets (red/amber) always sort to the top so you face them first.</p>
@@ -1258,15 +1353,22 @@ listEl.addEventListener("input", (e) => {
   }
 });
 
-function gradeProblem(pid, box) {
+function gradeProblem(pid, grade) {
   const today = todayISO();
   const cur = STATE[pid] || { box: 0, due: null, last: null, attempts: 0, trigger: "" };
+  if (cur.last !== today || !BEFORE_TODAY[pid]) BEFORE_TODAY[pid] = { ...cur };
+  const base = cur.last === today ? BEFORE_TODAY[pid] : cur;
+  const kind = gradeKind(base);
+  const box = nextBox(base.box, grade, kind);
   STATE[pid] = {
+    ...base,
     box,
     due: addDays(today, INTERVAL[box]),
     last: today,
-    attempts: cur.attempts + 1,
+    attempts: (base.attempts || 0) + 1,
     trigger: cur.trigger || "",
+    kind,
+    started: base.started || today,
   };
   saveState({ immediate: true }); // a grade is one discrete event — never debounce it
   // Stay open. The row relocates to "Done today" and keeps the note prompt on
