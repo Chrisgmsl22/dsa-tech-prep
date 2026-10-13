@@ -23,6 +23,14 @@
       "blurb": "Iterative BFS over a 2D grid — watch the queue hold (row, col) coordinates and the frontier expand outward, one ring at a time.",
       "tags": ["queue", "matrix", "directions array", "level order"],
       "source": "patterns/grids/bfs_on_grids.py"
+    },
+    {
+      "category": "linked_lists",
+      "slug": "reverse_linked_list",
+      "title": "Reverse a Linked List",
+      "blurb": "Iterative in-place reversal — watch curr, temp and next walk the list one line at a time as each .next arrow flips backwards.",
+      "tags": ["pointers", "in-place", "iterative"],
+      "source": "patterns/linked_lists/reverse_linked_list.py"
     }
   ]
 }

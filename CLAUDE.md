@@ -347,6 +347,10 @@ Key facts about the tracker (full details in `apps/prep-tracker/README.md`):
     `reviews/<category>/<problem_slug>/YYYY-MM-DD_<grade>.py`. Never overwrite past attempts —
     the dated history is the point. Always solve cold, then validate on LeetCode.
 
+**Superseded 2026-10-12 by `PRACTICE.md`.** For the weekly new-problem quota, rep types (quick
+rep via `/quick-rep`, full rep), boxes and the order of new problems, `PRACTICE.md` wins over the
+section below. The time-box protocol below still applies.
+
 **The daily plan (set 2026-08-24): 3 reps + 1 new problem when there is capacity.**
 
 The student's own framing, and it is the right one: *consistency is the weapon*. Three reps

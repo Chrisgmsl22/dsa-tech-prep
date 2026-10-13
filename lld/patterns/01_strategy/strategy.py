@@ -45,3 +45,5 @@ class CryptoPayment(IPaymentStrategy):
     
     def make_payment(self, amount: int) -> None:
         print(f"Making a {amount} payment with {self.wallet_addr} Cyrpto acct")
+
+# Now we need a context class

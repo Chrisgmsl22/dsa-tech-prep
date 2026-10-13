@@ -119,18 +119,18 @@
     "trigger": "Binary search algorithm, 2 pointers, find middle point, if bigger move left, if smaller move right\n-1 if not found"
   },
   "binary_search#2": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-08-30",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-10-22",
+    "last": "2026-10-01",
+    "trigger": "Binary search"
   },
   "binary_search#3": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-09-02",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-10-28",
+    "last": "2026-10-07",
+    "trigger": "Binary search, keep going until you dont have a valid answer"
   },
   "binary_search#8": {
     "attempts": 0,
@@ -175,18 +175,18 @@
     "trigger": ""
   },
   "graphs#1": {
-    "attempts": 0,
+    "attempts": 1,
     "box": 2,
-    "due": "2026-08-27",
-    "last": null,
-    "trigger": ""
+    "due": "2026-10-03",
+    "last": "2026-09-30",
+    "trigger": "BFS, queues, traversal.\nNot the cleanest code, but it worked"
   },
   "graphs#2": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-08-31",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 3,
+    "due": "2026-10-12",
+    "last": "2026-10-05",
+    "trigger": "BFS, grids need directions array, for each direction keep BFSing.\nKeep counter"
   },
   "graphs#3": {
     "attempts": 0,
@@ -280,18 +280,18 @@
     "trigger": "pointers, traverse, if duplicate, connect to the NEXT NEXT.\nNo need to use a hash set.\nOnce completed, return the initial start of the list (need a pointer to keep track of start or return head)"
   },
   "linked_lists#2": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-08-30",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 3,
+    "due": "2026-10-07",
+    "last": "2026-09-30",
+    "trigger": "pointers, track next node, current node and temp"
   },
   "linked_lists#3": {
-    "attempts": 0,
+    "attempts": 1,
     "box": 2,
-    "due": "2026-09-02",
-    "last": null,
-    "trigger": ""
+    "due": "2026-10-09",
+    "last": "2026-10-06",
+    "trigger": "3 pointers, prev and 2 currs, use a dummy node to append new list, just connect to the smallest node and move on"
   },
   "linked_lists#4": {
     "attempts": 0,
@@ -322,11 +322,11 @@
     "trigger": "slide across, grow when char is not seen, store chars in a place, keep track of the biggest at all times "
   },
   "sliding_window#4": {
-    "attempts": 2,
-    "box": 2,
-    "due": "2026-09-24",
-    "last": "2026-09-21",
-    "trigger": "Sliding window, dont make actual replacements, track counters, how do you obtain the replacements needed?"
+    "attempts": 4,
+    "box": 4,
+    "due": "2026-10-19",
+    "last": "2026-09-28",
+    "trigger": "Sliding window, dont make actual replacements, track counters, how do you obtain the replacements needed?\ncalculate replacements needed by looking at the most frequenct chars, you want to filter out the smaller values (compare against k)"
   },
   "sliding_window#5": {
     "attempts": 1,
@@ -364,18 +364,18 @@
     "trigger": "Monotonic stack, while stack exists and a condition is met, keep popping and compute the result.\nDo not store temps, but the actual indices, when them we can get the values"
   },
   "trees#1": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-08-27",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 3,
+    "due": "2026-10-07",
+    "last": "2026-09-30",
+    "trigger": "Recursion, assume recursive call returns you what you already need"
   },
   "trees#2": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-08-30",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-10-21",
+    "last": "2026-09-30",
+    "trigger": "Recursion, ask branches which one was bigger, connect each recursive call by the return type"
   },
   "trees#3": {
     "attempts": 0,
@@ -439,6 +439,13 @@
     "due": "2026-09-01",
     "last": "2026-08-11",
     "trigger": "Be really mindful of constraints, need to cleanup the string first, 2 pointers compare, break once condition is not valid arr[ : : -1]"
+  },
+  "two_pointers#5": {
+    "attempts": 2,
+    "box": 2,
+    "due": "2026-10-02",
+    "last": "2026-09-29",
+    "trigger": "divide and conquer, sort + 2 pointers"
   },
   "two_pointers#8": {
     "attempts": 2,

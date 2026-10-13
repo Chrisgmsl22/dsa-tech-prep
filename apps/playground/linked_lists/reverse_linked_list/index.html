@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reverse a Linked List · Iterative</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script>
+    // Dev cache-buster: always load the freshest CSS while iterating (no hard-refresh needed).
+    document.write('<link rel="stylesheet" href="styles.css?v=' + Date.now() + '">');
+  </script>
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <header class="head">
+      <div class="head__title">
+        <a class="head__back" href="../../index.html">&larr; Playground</a>
+        <span class="head__kicker">linked lists</span>
+        <h1>Reverse a Linked List</h1>
+      </div>
+      <div class="head__meta">
+        <span class="dot"></span> iterative · in-place · O(n) time · O(1) space
+      </div>
+    </header>
+
+    <section class="controls" role="group" aria-label="Playback controls">
+      <button id="play" class="btn btn--primary">
+        <span class="btn__glyph" id="play-glyph">&#9654;</span>
+        <span id="play-label">Play</span>
+      </button>
+      <button id="step" class="btn">&rsaquo;&rsaquo; Step</button>
+      <button id="reset" class="btn">&#8635; Reset</button>
+
+      <div class="speed">
+        <label for="speed">Speed</label>
+        <input id="speed" type="range" min="0" max="8" step="1" value="4" />
+        <span class="speed__val" id="speed-val">1&times;</span>
+      </div>
+
+      <div class="progress" id="progress">
+        <span id="progress-text">0 / 0</span>
+        <div class="progress__bar"><div class="progress__fill" id="progress-fill"></div></div>
+      </div>
+    </section>
+
+    <section class="input-bar" aria-label="Input list">
+      <form id="input-form" class="input-form" autocomplete="off">
+        <label for="list-input">head =</label>
+        <input id="list-input" type="text" value="1, 2, 3, 4, 5" spellcheck="false"
+               placeholder="comma-separated, e.g. 1, 2, 3 (blank = empty list)" />
+        <button type="submit" class="btn btn--small">Build</button>
+      </form>
+      <div class="presets" id="presets">
+        <span class="presets__label">try</span>
+        <button type="button" class="preset" data-list="1,2,3,4,5">1→5</button>
+        <button type="button" class="preset" data-list="1,2">two nodes</button>
+        <button type="button" class="preset" data-list="7">single node</button>
+        <button type="button" class="preset" data-list="">empty</button>
+      </div>
+      <div class="input-err" id="input-err" role="alert"></div>
+    </section>
+
+    <section class="stage">
+      <svg id="list" viewBox="0 0 1000 310" preserveAspectRatio="xMidYMid meet" aria-label="Linked list visualization"></svg>
+      <div class="legend">
+        <span><i class="sw sw--pending"></i> unprocessed (from <code>curr</code> on)</span>
+        <span><i class="sw sw--reversed"></i> reversed (reachable from <code>temp</code>)</span>
+        <span><i class="ar ar--fwd"></i> original <code>.next</code></span>
+        <span><i class="ar ar--rev"></i> flipped <code>.next</code></span>
+      </div>
+    </section>
+
+    <div class="status" id="status">
+      <span class="status__tag">STATUS</span>
+      <span class="status__msg" id="status-msg">Press Play to start.</span>
+    </div>
+
+    <section class="grid">
+      <div class="panel panel--code">
+        <div class="panel__head">
+          <span class="panel__icon">&#10095;</span> Source
+          <span class="panel__hint"><code>patterns/linked_lists/reverse_linked_list.py</code></span>
+        </div>
+        <pre class="code" id="source"></pre>
+      </div>
+
+      <div class="side">
+        <div class="panel">
+          <div class="panel__head"><span class="panel__icon">&#9636;</span> Variables</div>
+          <div class="vars" id="vars"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel__head"><span class="panel__icon">&#8644;</span> Two Lists <span class="panel__hint">follow the real .next pointers</span></div>
+          <div class="chains" id="chains"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <kbd>Space</kbd> play/pause &nbsp; <kbd>&rarr;</kbd> step &nbsp; <kbd>R</kbd> reset
+    </footer>
+  </main>
+
+  <script>
+    document.write('<script src="app.js?v=' + Date.now() + '"><\/script>');
+  </script>
+</body>
+</html>
