@@ -73,7 +73,9 @@ The **Due today** tab opens on the **Today card**, three steps in order:
    quick-rep grade lands today (see `grade.py` below). On a rough day this alone is a win.
 2. **Reps.** The 3-problem window. Weak buckets (red/amber) sort to the top. Solve each one
    **blind**, then click it and grade. The row shows **no category** until you grade it, and
-   the file path hides too: spotting the pattern is part of the rep.
+   the file path hides too: spotting the pattern is part of the rep. The window shrinks as you
+   grade and does not refill: at 0 the step reads **Reps done for today**, and **Show all**
+   has more if you want them. New problems and quick reps do not use up the 3.
 3. **New problem.** The next one in the PRACTICE.md order, with a weekly counter
    (`this week: N/2`). At 2 it stays visible as a **stretch**; at 3 the step says
    **week done** and shows no problem. The quota is weekly, so a missed day moves nothing.
@@ -82,6 +84,11 @@ The **Due today** tab opens on the **Today card**, three steps in order:
 PRACTICE.md "How to grade" check: the new-problem checks for a problem at box 0 (never
 attempted), the full-rep checks for everything else, triage included. Each ends with the
 real next interval for that problem (Fast on a box 4 problem says `+45d`).
+
+**Graded it wrong?** The panel stays open after a grade so you can change it. A re-grade on the
+same day starts from the entry as it was before the day's first grade, so clicking Fast twice
+climbs once. That earlier entry is stored in the entry as `prev`, so this also holds after a
+reload and after a `grade.py` write.
 
 | Box | Reached by | Next review |
 | --- | --- | --- |
@@ -110,7 +117,8 @@ python3 apps/prep-tracker/grade.py stacks#1 pass --date 2026-10-12
 - `fail` → Failed (box 1). `pass` on a triage problem (box 2, never graded) → Clean (box 3).
   `pass` on box 4 and up → Fast as a quick rep (box 5 at most). Any other `pass` → Clean.
 - It writes `kind: "quick"`, adds 1 to `attempts`, sets `last` and `due`, keeps the trigger, and
-  never writes `started`: a quick rep is always a rep, never a new problem. It prints one
+  never writes `started`: a quick rep is always a rep, never a new problem. Like the app, it
+  stores `prev` on the day's first grade and starts a same-day grade from it. It prints one
   line: `key: box 4 → 5, next due …`.
 - **Write path.** When the server answers on `localhost:${PORT:-8000}`, the grade goes through
   it with the same `If-Match` check the app uses (one retry after a `409`). Only when nothing
@@ -128,7 +136,7 @@ entries count as reps, not new problems. Older entries without these fields keep
 ## 3. The tabs
 
 - **Due today** — the Today card. The badge counts the reps still to do in today's window
-  (0 to 3), not the backlog. **Show all** lists the whole backlog.
+  (0 to 3), the same rows the window shows, not the backlog. **Show all** lists the whole backlog.
 - **New** — the ~68 problems you haven't started yet, grouped by category (core first).
   Grading one for the first time pulls it into the rotation.
 - **All** — all 129 problems with every problem's current box and next-review date.

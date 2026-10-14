@@ -345,38 +345,79 @@ test("weeklyCounts: a grade.py quick rep (no started) counts as a rep", () => {
   assert.deepStrictEqual(S.weeklyCounts([quick], "2026-10-12", "2026-10-18"), { newCount: 0, reps: 1 });
 });
 
-// ---- re-grade, week start, reps left (review round 1) ----
+// ---- re-grade from a stored prev (plan rev 6, criterion 14) ----
 
-test("regradeBase: a second Fast click on the same day does not climb twice", () => {
-  let snapshot;
+const withoutPrev = ({ prev, ...rest }) => rest;
+
+test("applyGrade: a second Fast click on the same day does not climb twice", () => {
   let entry = { ...LEGACY };                         // box 4
   for (let click = 1; click <= 3; click++) {
-    const r = S.regradeBase(entry, snapshot, DAY);
-    snapshot = r.snapshot;
-    entry = S.applyGrade(r.base, FAST, DAY, dueFor);
+    entry = S.applyGrade(entry, FAST, DAY, dueFor);
     assert.strictEqual(entry.box, 5, `click ${click}`);
     assert.strictEqual(entry.attempts, 3, `click ${click} counts once`);
   }
 });
 
-test("regradeBase: a re-grade can still go down, from the same base", () => {
-  const first = S.regradeBase({ ...LEGACY }, undefined, DAY);
-  const graded = S.applyGrade(first.base, FAST, DAY, dueFor);
-  const again = S.regradeBase(graded, first.snapshot, DAY);
-  assert.strictEqual(S.applyGrade(again.base, FAILED, DAY, dueFor).box, 1);
-  assert.deepStrictEqual(again.base, LEGACY);
+test("applyGrade: the first grade of a day stores prev; a same-day re-grade keeps it", () => {
+  const first = S.applyGrade(LEGACY, CLEAN, DAY, dueFor);
+  assert.deepStrictEqual(first.prev, { box: 4, due: "2026-10-01", last: "2026-09-10", attempts: 2 });
+  const again = S.applyGrade(first, FAILED, DAY, dueFor);
+  assert.deepStrictEqual(again.prev, first.prev);
 });
 
-test("regradeBase: a grade on a new day takes a fresh snapshot", () => {
-  const stale = { ...LEGACY, box: 1 };
-  const r = S.regradeBase(LEGACY, stale, DAY);       // LEGACY.last is not DAY
-  assert.strictEqual(r.base, LEGACY);
-  assert.deepStrictEqual(r.snapshot, LEGACY);
+test("applyGrade: a grade on a new day writes a fresh prev", () => {
+  const yesterday = S.applyGrade(LEGACY, CLEAN, "2026-10-11", dueFor);
+  const today = S.applyGrade(yesterday, FAST, DAY, dueFor);
+  assert.deepStrictEqual(today.prev, { box: 3, due: "+3", last: "2026-10-11", attempts: 3, kind: "full" });
+  assert.strictEqual(today.box, 4, "Fast climbs from yesterday's box 3, not from LEGACY");
 });
 
-test("regradeBase: graded today with no snapshot (after a reload) uses the current entry", () => {
+test("prevOf: keeps null, omits absent fields, and never nests", () => {
+  assert.deepStrictEqual(S.prevOf(TRIAGE), { box: 2, due: "2026-09-01", last: null, attempts: 0 });
+  const graded = S.applyGrade(S.applyGrade(LEGACY, CLEAN, "2026-10-11", dueFor), CLEAN, DAY, dueFor);
+  assert.deepStrictEqual(Object.keys(graded.prev).sort(), ["attempts", "box", "due", "kind", "last"]);
+});
+
+test("regradeBase: a re-grade goes down from the entry before today's first grade", () => {
+  const graded = S.applyGrade(LEGACY, FAST, DAY, dueFor);
+  assert.deepStrictEqual(withoutPrev(S.regradeBase(graded, DAY)), LEGACY);
+  assert.strictEqual(S.applyGrade(graded, FAILED, DAY, dueFor).box, 1);
+});
+
+test("regradeBase: an entry last graded on another day is its own base", () => {
+  const stale = { ...LEGACY, prev: { box: 1 } };
+  assert.strictEqual(S.regradeBase(stale, DAY), stale);
+});
+
+test("regradeBase: graded today with no prev (older data) falls back to the current entry", () => {
   const cur = { ...LEGACY, last: DAY, box: 5 };
-  assert.strictEqual(S.regradeBase(cur, undefined, DAY).base.box, 5);
+  assert.strictEqual(S.regradeBase(cur, DAY), cur);
+});
+
+test("regradeBase: a new problem re-graded the same day stays new and keeps started", () => {
+  const first = S.applyGrade(UNSTARTED, CLEAN, DAY, dueFor);
+  const again = S.applyGrade(first, FAST, DAY, dueFor);
+  assert.deepStrictEqual(
+    [again.box, again.kind, again.started, again.attempts, again.prev],
+    [4, "new", DAY, 1, { box: 0, due: null, last: null, attempts: 0 }]
+  );
+});
+
+/* The bug that opened rev 6: grade.py pass on box 4 lands on 5 with prev box 4.
+ * A Fast re-grade in the app must give 5 (+45d), not 6 (+120d), and a reload
+ * (a JSON round trip of the file) must not change that. */
+test("applyGrade: a Fast re-grade after a grade.py quick rep gives box 5, also after a reload", () => {
+  const quick = {
+    box: 5, due: "2026-11-26", last: DAY, attempts: 3, trigger: "", kind: "quick",
+    prev: { box: 4, due: "2026-10-01", last: "2026-09-10", attempts: 2 },
+  };
+  for (const entry of [quick, JSON.parse(JSON.stringify(quick))]) {
+    const base = S.regradeBase(entry, DAY);
+    assert.strictEqual(S.INTERVAL[S.nextBox(base.box, FAST, S.gradeKind(base))], 45);
+    const got = S.applyGrade(entry, FAST, DAY, dueFor);
+    assert.deepStrictEqual([got.box, got.due, got.attempts, got.kind], [5, "+5", 3, "full"]);
+    assert.deepStrictEqual(got.prev, quick.prev);
+  }
 });
 
 test("mondayOf: steps back to Monday, across month, year and leap day", () => {
@@ -391,13 +432,39 @@ test("mondayOf: steps back to Monday, across month, year and leap day", () => {
   assert.strictEqual(S.mondayOf("2200-03-01", 6), "2200-02-24");  // 100-year rule: not leap
 });
 
-test("repsLeft: counts down from the window size; new problems and quick reps do not count", () => {
-  const rep = { last: DAY, kind: "full" };
-  const newOne = { last: DAY, kind: "new", started: DAY };
-  const quick = { last: DAY, kind: "quick" };
+// ---- the window does not refill (plan rev 6, criterion 13) ----
+
+const rep = { last: DAY, kind: "full" };
+const newOne = { last: DAY, kind: "new", started: DAY };
+const quick = { last: DAY, kind: "quick" };
+
+test("repsLeft: the window size minus reps graded today; new problems and quick reps do not count", () => {
   const legacy = { last: DAY };                      // graded before kind existed
-  assert.strictEqual(S.repsLeft(3, [], DAY, 3), 3);
-  assert.strictEqual(S.repsLeft(3, [rep, newOne, quick], DAY, 3), 2);
-  assert.strictEqual(S.repsLeft(3, [rep, legacy, rep, rep], DAY, 3), 0, "never below 0");
-  assert.strictEqual(S.repsLeft(1, [], DAY, 3), 1, "never above the window");
+  assert.strictEqual(S.repsLeft([], DAY, 3), 3);
+  assert.strictEqual(S.repsLeft([rep, newOne, quick], DAY, 3), 2);
+  assert.strictEqual(S.repsLeft([rep, legacy, rep, rep], DAY, 3), 0, "never below 0");
+});
+
+const duePool = () => ["a", "b", "c", "d", "e"].map((key, i) =>
+  ({ key, cat: "two_pointers", box: 3, daysUntil: -i, last: "2026-10-01" }));
+
+test("repWindow: shrinks by one per rep graded, from 3 to 0, and never refills", () => {
+  const sizes = [[], [rep], [rep, rep], [rep, rep, rep]]
+    .map((graded) => S.repWindow(duePool(), graded, DAY, S.WINDOW_SIZE).length);
+  assert.deepStrictEqual(sizes, [3, 2, 1, 0]);
+});
+
+test("repWindow: new problems and quick reps leave the window full", () => {
+  assert.strictEqual(S.repWindow(duePool(), [newOne, quick], DAY, S.WINDOW_SIZE).length, 3);
+});
+
+test("repWindow: a problem graded today is never a candidate, even when urgent", () => {
+  const pool = [...duePool(), { key: "x", cat: "stacks", box: 1, daysUntil: 0, last: DAY }];
+  const picked = S.repWindow(pool, [], DAY, S.WINDOW_SIZE);
+  assert.ok(!picked.some((c) => c.key === "x"));
+  assert.strictEqual(picked.length, 3);
+});
+
+test("repWindow: a short supply shows what is due, not more", () => {
+  assert.strictEqual(S.repWindow(duePool().slice(0, 1), [], DAY, S.WINDOW_SIZE).length, 1);
 });

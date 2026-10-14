@@ -34,24 +34,42 @@ function gradeKind(entry) {
   return (entry.box || 0) === 0 ? "new" : "full";
 }
 
-/* An app grade. `dueFor(box)` returns the due date, so this file stays free
- * of Date. Only a grade from box 0 dates `started`; grade.py never does. */
-function applyGrade(base, grade, today, dueFor) {
+/* An app grade of the current entry. `dueFor(box)` returns the due date, so
+ * this file stays free of Date. Only a grade from box 0 dates `started`;
+ * grade.py never does. The first grade of a day stores `prev`; a re-grade
+ * keeps it, so every grade that day starts from the same place. */
+function applyGrade(cur, grade, today, dueFor) {
+  const base = regradeBase(cur, today);
   const kind = gradeKind(base);
   const box = nextBox(base.box, grade, kind);
   const graded = {
     ...base, box, due: dueFor(box), last: today, attempts: (base.attempts || 0) + 1, kind,
   };
+  if (cur.last !== today) graded.prev = prevOf(cur);
   if (kind === "new" && !base.started) graded.started = today;
   return graded;
 }
 
+/* What `prev` remembers. grade.py's PREV_FIELDS is the twin. A field the
+ * entry never had stays out, so restoring it cannot invent one. */
+const PREV_FIELDS = ["box", "due", "last", "attempts", "kind"];
+
+function prevOf(entry) {
+  const prev = {};
+  for (const f of PREV_FIELDS) if (entry[f] !== undefined) prev[f] = entry[f];
+  return prev;
+}
+
 /* A re-grade ("graded it wrong?") must start from the entry as it was before
- * today's first grade, or a second Fast click climbs twice. `snapshot` is that
- * entry, if this tab saw it; without one, the current entry is the best base. */
-function regradeBase(cur, snapshot, today) {
-  const snap = cur.last !== today || !snapshot ? { ...cur } : snapshot;
-  return { base: cur.last === today ? snap : cur, snapshot: snap };
+ * today's first grade, or a second Fast click climbs twice. `prev` lives in
+ * the entry, so this holds after a reload and after a grade.py write. Without
+ * one (graded today before `prev` existed) the current entry is the best base.
+ * grade.py's regrade_base() is the twin. */
+function regradeBase(cur, today) {
+  if (cur.last !== today || !cur.prev) return cur;
+  const base = { ...cur };
+  for (const f of PREV_FIELDS) delete base[f];
+  return { ...base, ...cur.prev };
 }
 
 /* `weekday` is Date#getDay() of `iso` (0 = Sunday), passed in so this file
@@ -69,12 +87,19 @@ function mondayOf(iso, weekday) {
   return `${y}-${pad(m)}-${pad(d)}`;
 }
 
-/* Reps left in today's window. The window refills as you grade, so count
- * down from windowSize instead of showing its length. New problems and quick
- * reps have their own Today steps and do not count. */
-function repsLeft(windowLen, gradedToday, today, windowSize) {
+/* Reps left today: the window size minus reps already graded. New problems
+ * and quick reps have their own Today steps and do not count. */
+function repsLeft(gradedToday, today, windowSize) {
   const repsDone = gradedToday.filter((e) => e.started !== today && e.kind !== "quick").length;
-  return Math.max(0, Math.min(windowLen, windowSize - repsDone));
+  return Math.max(0, windowSize - repsDone);
+}
+
+/* Today's window, shrinking as you grade instead of refilling: a window that
+ * refills is a backlog with a lid on it, and the day never ends. Candidates
+ * carry `last`, so a problem graded today never comes back in. */
+function repWindow(candidates, gradedToday, today, windowSize) {
+  const open = candidates.filter((c) => c.last !== today);
+  return selectWindow(open, repsLeft(gradedToday, today, windowSize));
 }
 
 /* Week tallies for the stat strip. Dates are ISO strings, so a plain string
@@ -240,7 +265,7 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     TIERS, TIER_SHARE, WINDOW_SIZE, INTERVAL, ROADMAP_CATEGORY, LAST_CATEGORY,
     largestRemainder, tierOf, isUrgent, comparePriority, selectWindow,
-    nextBox, gradeKind, applyGrade, regradeBase, mondayOf, repsLeft,
-    weeklyCounts, pickNewProblem,
+    nextBox, gradeKind, applyGrade, PREV_FIELDS, prevOf, regradeBase, mondayOf, repsLeft,
+    repWindow, weeklyCounts, pickNewProblem,
   };
 }

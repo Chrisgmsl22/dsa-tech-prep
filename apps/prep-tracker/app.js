@@ -590,10 +590,6 @@ let CAT_FILTER = "all";
 let OPEN_ID = null;
 let SHOW_ALL = false; // session-only Due-view override; not persisted
 let FOCUS_TRIGGER = false; // one-shot: focus the note field after the next render
-/* Each entry as it was before today's first grade. A re-grade ("graded it
- * wrong?") must start from there: Fast now climbs from the current box, so
- * re-clicking Fast would otherwise climb twice. Session-only on purpose. */
-const BEFORE_TODAY = {};
 
 /* ---------- derived helpers ---------- */
 function prog(p) {
@@ -710,11 +706,11 @@ function exportProgress() {
   setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 0);
 }
 
-// The badge: today's reps, not the backlog total, which measured the pile.
-function repsLeftToday() {
-  const windowLen = selectWindow(dueCandidates(PROBLEMS.filter(isDue)), WINDOW_SIZE).length;
+/* Today's rep window, shared by the Due list and the badge so the two always
+ * agree. The badge counts today's reps, not the backlog, which measured the pile. */
+function todayWindow() {
   const gradedToday = PROBLEMS.filter(isDoneToday).map(prog);
-  return repsLeft(windowLen, gradedToday, todayISO(), WINDOW_SIZE);
+  return repWindow(dueCandidates(PROBLEMS.filter(isDue)), gradedToday, todayISO(), WINDOW_SIZE);
 }
 
 function thisWeek() {
@@ -729,7 +725,7 @@ function renderStats() {
   const mastered = PROBLEMS.filter((p) => prog(p).box >= 4).length;
   const sprintDone = SPRINT.filter((s) => sprog(s).status === "done").length;
 
-  dueBadge.textContent = repsLeftToday();
+  dueBadge.textContent = todayWindow().length;
   sprintBadge.textContent = sprintDone;
 
   // The sprint answers a different question from the rotation: not "how deep is
@@ -806,7 +802,7 @@ function windowNoteHTML(shown, total) {
   } else if (total > shown) {
     toggle = `<button class="ghost" id="windowToggle">Show all</button>`;
   }
-  let scope = `<strong>${repsLeftToday()}</strong> of ${WINDOW_SIZE} reps left today`;
+  let scope = `<strong>${shown}</strong> of ${WINDOW_SIZE} reps left today`;
   if (SHOW_ALL) scope = `Showing all <strong>${total}</strong> due`;
   else if (CAT_FILTER !== "all") scope = `Showing <strong>${shown}</strong> in this category`;
   return (
@@ -819,7 +815,9 @@ function windowNoteHTML(shown, total) {
 function dueCandidates(problems) {
   return problems.map((p) => {
     const st = prog(p);
-    return { key: id(p), cat: p.cat, box: st.box, daysUntil: daysUntil(st.due), problem: p };
+    return {
+      key: id(p), cat: p.cat, box: st.box, daysUntil: daysUntil(st.due), last: st.last, problem: p,
+    };
   });
 }
 
@@ -842,7 +840,7 @@ function renderList() {
     if (SHOW_ALL) {
       picked = candidates.slice().sort(comparePriority);
     } else if (CAT_FILTER === "all") {
-      picked = selectWindow(candidates, WINDOW_SIZE);
+      picked = todayWindow();
     } else {
       // Tier quotas are meaningless inside a single category — just cap.
       picked = candidates.slice().sort(comparePriority).slice(0, WINDOW_SIZE);
@@ -852,14 +850,18 @@ function renderList() {
       .filter((p) => (CAT_FILTER === "all" || p.cat === CAT_FILTER) && isDoneToday(p))
       .sort((a, b) => catRank(a.cat) - catRank(b.cat) || a.n - b.n);
 
-    const body = picked.length
-      ? picked.map((x) => rowHTML(x.problem, { hideCat: true })).join("")
-      : `<p class="empty">${emptyMessage()}</p>`;
+    // Reps done with more still due: the window note's "Show all" is the
+    // way on, so "Nothing due today" would be wrong here.
+    const noRepsLeft = !SHOW_ALL && CAT_FILTER === "all" && !picked.length;
+    let body = picked.map((x) => rowHTML(x.problem, { hideCat: true })).join("");
+    if (!picked.length && !(noRepsLeft && candidates.length)) {
+      body = `<p class="empty">${emptyMessage()}</p>`;
+    }
     const reps = windowNoteHTML(picked.length, candidates.length) + body;
 
     // A filtered view is a focused drill, not the daily plan.
     listEl.innerHTML =
-      (CAT_FILTER === "all" ? todayCardHTML(reps) : reps) + doneSectionHTML(done);
+      (CAT_FILTER === "all" ? todayCardHTML(reps, noRepsLeft) : reps) + doneSectionHTML(done);
     return;
   }
 
@@ -903,7 +905,7 @@ function suggestNewProblem() {
 /* The day in PRACTICE.md order: the floor first (one quick rep keeps the
  * streak), then the reps, then growth. Growth lives here, not only in the New
  * tab, because a step you have to remember is a step that stops happening. */
-function todayCardHTML(repsHTML) {
+function todayCardHTML(repsHTML, repsDone) {
   const today = todayISO();
   const quickDone = Object.values(STATE).some((s) => s && s.kind === "quick" && s.last === today);
   return (
@@ -912,7 +914,10 @@ function todayCardHTML(repsHTML) {
         `<span class="today__num">${quickDone ? "✓" : "1"}</span>` +
         `<span>Start with a quick rep: run <code>/quick-rep</code> in Claude Code (10 min)</span>` +
       `</div>` +
-      `<div class="today__step"><span class="today__num">2</span><span>Reps</span></div>` +
+      `<div class="today__step${repsDone ? " is-done" : ""}">` +
+        `<span class="today__num">${repsDone ? "✓" : "2"}</span>` +
+        `<span>${repsDone ? "Reps done for today" : "Reps"}</span>` +
+      `</div>` +
       repsHTML +
       newStepHTML() +
     `</section>`
@@ -1020,10 +1025,10 @@ function rowHTML(p, opts) {
 
 /* Sub-labels and intervals describe what THIS click would do. A re-grade
  * starts from the entry as it was before today's first grade, exactly as
- * gradeProblem() does, so the Fast interval shown is the one you get. */
+ * applyGrade() does, so the Fast interval shown is the one you get. */
 function panelHTML(p, st, hideCat) {
   const gradedToday = isDoneToday(p);
-  const { base } = regradeBase(st, BEFORE_TODAY[id(p)], todayISO());
+  const base = regradeBase(st, todayISO());
   const kind = gradeKind(base);
   const grades = GRADES.map((g) => {
     const days = INTERVAL[nextBox(base.box, g.box, kind)];
@@ -1237,7 +1242,7 @@ const HELP_HTML = `
   <h3>The Today card</h3>
   <ul>
     <li><strong>1. Quick rep.</strong> Run <code>/quick-rep</code> in Claude Code (10 min). It ticks itself when a quick-rep grade lands today. On a rough day this alone is a win.</li>
-    <li><strong>2. Reps.</strong> Up to 3 problems from the schedule. Solve each <em>blind</em>, then click it and <strong>grade honestly</strong>. The category stays hidden until you grade: spotting the pattern is part of the rep.</li>
+    <li><strong>2. Reps.</strong> Up to 3 problems from the schedule. Solve each <em>blind</em>, then click it and <strong>grade honestly</strong>. The category stays hidden until you grade: spotting the pattern is part of the rep. The window shrinks as you grade and does not refill; at 0 it says <em>Reps done for today</em>, and <strong>Show all</strong> has more if you want them.</li>
     <li><strong>3. New problem.</strong> The next one in the PRACTICE.md order. Target 2 a week, a 3rd is a stretch, then the week is done.</li>
     <li>Write the <strong>trigger sentence</strong> after each grade — the cue that unlocks the pattern. That's the part that transfers.</li>
   </ul>
@@ -1360,10 +1365,8 @@ listEl.addEventListener("input", (e) => {
 function gradeProblem(pid, grade) {
   const today = todayISO();
   const cur = STATE[pid] || { box: 0, due: null, last: null, attempts: 0, trigger: "" };
-  const { base, snapshot } = regradeBase(cur, BEFORE_TODAY[pid], today);
-  BEFORE_TODAY[pid] = snapshot;
   STATE[pid] = {
-    ...applyGrade(base, grade, today, (box) => addDays(today, INTERVAL[box])),
+    ...applyGrade(cur, grade, today, (box) => addDays(today, INTERVAL[box])),
     trigger: cur.trigger || "",
   };
   saveState({ immediate: true }); // a grade is one discrete event — never debounce it

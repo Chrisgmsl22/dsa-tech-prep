@@ -122,3 +122,42 @@ test("a successful save clears the unsaved state", async () => {
   assert.strictEqual(app.run("hasUnsaved()"), false);
   assert.strictEqual(server.data["stacks#1"].attempts, 3);
 });
+
+/* Plan rev 6. The rows shown in the window are everything before step 3,
+ * which holds the new-problem row. */
+const windowRows = (app) =>
+  (app.run('listEl.innerHTML.split("today__step--new")[0]').match(/class="row /g) || []).length;
+
+test("the window shrinks as reps are graded, and the badge equals the rows shown", async () => {
+  const server = fakeServer(seed());
+  const app = await loadApp(server);
+  app.run("render()");
+  for (let left = 3; left >= 0; left--) {
+    assert.strictEqual(windowRows(app), left, `rows with ${left} left`);
+    assert.strictEqual(String(app.run("dueBadge.textContent")), String(left), `badge with ${left} left`);
+    if (left) app.run("gradeProblem(todayWindow()[0].key, 3)");
+  }
+  assert.match(app.run("listEl.innerHTML"), /Reps done for today/);
+  assert.match(app.run("listEl.innerHTML"), /id="windowToggle">Show all/);
+  assert.doesNotMatch(app.run("listEl.innerHTML"), /Nothing due today/);
+});
+
+test("a Fast re-grade after a grade.py quick rep gives box 5, before and after a reload", async () => {
+  const server = fakeServer(seed());
+  const app = await loadApp(server);
+  const today = app.run("todayISO()");
+  const prev = { box: 4, due: "2026-01-01", last: "2025-12-01", attempts: 2 };
+  server.outsideWrite("stacks#2", { box: 5, due: "2099-01-01", last: today, attempts: 3, trigger: "", kind: "quick", prev });
+  await app.run("refreshIfChanged()");
+
+  app.run('gradeProblem("stacks#2", 4)');
+  await settle();
+  const first = server.data["stacks#2"];
+  assert.deepStrictEqual([first.box, first.attempts, first.prev], [5, 3, prev]);
+
+  const reloaded = await loadApp(server);
+  assert.match(reloaded.run('panelHTML(PROBLEMS.find((p) => id(p) === "stacks#2"), STATE["stacks#2"], false)'), /Fast<small>[^<]*\+45d/);
+  reloaded.run('gradeProblem("stacks#2", 4)');
+  await settle();
+  assert.deepStrictEqual(server.data["stacks#2"], first, "a reload changes nothing");
+});
