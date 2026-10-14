@@ -70,6 +70,13 @@ class Handler(SimpleHTTPRequestHandler):
     def _route(self):
         return self.path.split("?", 1)[0]
 
+    def end_headers(self):
+        # Static files revalidate on every load, or a reload keeps running
+        # yesterday's app.js. The API sets its own no-store in _json().
+        if self._route() != "/api/progress":
+            self.send_header("Cache-Control", "no-cache")
+        super().end_headers()
+
     def _json(self, code, payload, etag=None):
         body = json.dumps(payload).encode()
         self.send_response(code)

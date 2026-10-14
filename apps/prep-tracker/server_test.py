@@ -143,6 +143,14 @@ try:
     print(f"       (served in {time.time() - t0:.2f}s while a POST hung)")
     s.close()
 
+    print("=== static files revalidate, the API is never stored ===")
+    for path in ("/", "/app.js", "/styles.css"):
+        st, h, _ = req("GET", path)
+        check(f"{path} is 200 with Cache-Control: no-cache",
+              st == 200 and h.get("Cache-Control") == "no-cache", (st, h.get("Cache-Control")))
+    _, h, _ = req("GET")
+    check("the API keeps no-store", h.get("Cache-Control") == "no-store", h.get("Cache-Control"))
+
     print("=== path traversal ===")
     st, _, _ = req("GET", "/../CLAUDE.md")
     check("traversal 404s", st in (404, 400), st)
