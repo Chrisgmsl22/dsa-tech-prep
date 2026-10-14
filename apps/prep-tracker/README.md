@@ -132,6 +132,8 @@ python3 apps/prep-tracker/grade.py stacks#1 pass --date 2026-10-12
 Every grade, from the app or `grade.py`, records `kind` (`new`, `full`, or `quick`). Only an app
 grade from box 0 records `started`, so the 23 triage problems (box 2, never graded) and older
 entries count as reps, not new problems. Older entries without these fields keep working.
+Re-grading today's quick rep in the app corrects it: it stays `quick`, so it cannot earn box 6,
+uses none of the 3 reps, and step 1 keeps its tick.
 
 ---
 

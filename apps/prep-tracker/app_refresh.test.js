@@ -160,3 +160,28 @@ test("a Fast re-grade after a grade.py quick rep gives box 5, before and after a
   await settle();
   assert.deepStrictEqual(server.data["stacks#2"], first, "a reload changes nothing");
 });
+
+test("correcting today's quick rep from box 5 keeps it quick: box 5, no rep slot, tick stays", async () => {
+  const server = fakeServer(seed());
+  const app = await loadApp(server);
+  const today = app.run("todayISO()");
+  const prev = { box: 5, due: "2026-01-01", last: "2025-11-01", attempts: 3, kind: "full" };
+  server.outsideWrite("stacks#2", { box: 5, due: "2099-01-01", last: today, attempts: 4, trigger: "", kind: "quick", prev });
+  await app.run("refreshIfChanged()");
+  app.run("render()");
+  const rowsBefore = windowRows(app);
+  assert.match(app.run("listEl.innerHTML"), /class="quick is-done"/);
+
+  const panel = app.run('panelHTML(PROBLEMS.find((p) => id(p) === "stacks#2"), STATE["stacks#2"], false)');
+  assert.match(panel, /data-grade="4"[^>]*>Fast[^+]*\+45d/, "Fast offers box 5, not 6");
+  assert.doesNotMatch(panel, /undefined/);
+
+  app.run('gradeProblem("stacks#2", 4)');
+  await settle();
+  const got = server.data["stacks#2"];
+  assert.deepStrictEqual([got.box, got.kind, got.attempts, got.prev], [5, "quick", 4, prev]);
+  assert.strictEqual(windowRows(app), rowsBefore, "no rep slot used");
+  assert.strictEqual(String(app.run("dueBadge.textContent")), String(rowsBefore));
+  assert.match(app.run("listEl.innerHTML"), /class="quick is-done"/, "step 1 stays ticked");
+});
+

@@ -35,12 +35,19 @@ function gradeKind(entry) {
   return (entry.box || 0) === 0 ? "new" : "full";
 }
 
+/* An app grade on the day of a quick rep corrects that rep, so it stays
+ * "quick": capped at box 5, no rep slot, and step 1 keeps its tick. */
+function appGradeKind(cur, today) {
+  if (cur.kind === "quick" && cur.last === today) return "quick";
+  return gradeKind(regradeBase(cur, today));
+}
+
 /* An app grade. `dueFor(box)` returns the due date, so this file stays free
  * of Date. Only a grade from box 0 dates `started`. The day's first grade
  * stores `prev` and a re-grade keeps it, so every grade that day starts there. */
 function applyGrade(cur, grade, today, dueFor) {
   const base = regradeBase(cur, today);
-  const kind = gradeKind(base);
+  const kind = appGradeKind(cur, today);
   const box = nextBox(base.box, grade, kind);
   const graded = {
     ...base, box, due: dueFor(box), last: today, attempts: (base.attempts || 0) + 1, kind,
@@ -290,7 +297,7 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     TIERS, TIER_SHARE, WINDOW_SIZE, INTERVAL, ROADMAP_CATEGORY, LAST_CATEGORY,
     largestRemainder, tierOf, isUrgent, comparePriority, selectWindow,
-    nextBox, gradeKind, applyGrade, PREV_FIELDS, prevOf, regradeBase, mondayOf, repsLeft,
+    nextBox, gradeKind, appGradeKind, applyGrade, PREV_FIELDS, prevOf, regradeBase, mondayOf, repsLeft,
     repWindow, weeklyCounts, pickNewProblem, newProblemOrder, todayHeadline,
   };
 }

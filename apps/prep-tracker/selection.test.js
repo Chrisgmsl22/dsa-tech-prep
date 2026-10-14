@@ -447,11 +447,46 @@ test("applyGrade: a Fast re-grade after a grade.py quick rep gives box 5, also a
   };
   for (const entry of [quick, JSON.parse(JSON.stringify(quick))]) {
     const base = S.regradeBase(entry, DAY);
-    assert.strictEqual(S.INTERVAL[S.nextBox(base.box, FAST, S.gradeKind(base))], 45);
+    assert.strictEqual(S.INTERVAL[S.nextBox(base.box, FAST, S.appGradeKind(entry, DAY))], 45);
     const got = S.applyGrade(entry, FAST, DAY, dueFor);
-    assert.deepStrictEqual([got.box, got.due, got.attempts, got.kind], [5, "+5", 3, "full"]);
+    assert.deepStrictEqual([got.box, got.due, got.attempts, got.kind], [5, "+5", 3, "quick"]);
     assert.deepStrictEqual(got.prev, quick.prev);
   }
+});
+
+// ---- an app re-grade of today's quick rep corrects it ----
+
+const quickFrom = (prevBox) => ({
+  box: 5, due: "2026-11-26", last: DAY, attempts: 4, trigger: "", kind: "quick",
+  prev: { box: prevBox, due: "2026-10-01", last: "2026-08-17", attempts: 3, kind: "full" },
+});
+
+test("appGradeKind: today's quick rep stays quick; anything else follows gradeKind", () => {
+  assert.strictEqual(S.appGradeKind(quickFrom(5), DAY), "quick");
+  assert.strictEqual(S.appGradeKind({ ...quickFrom(5), last: "2026-10-11" }, DAY), "full");
+  assert.strictEqual(S.appGradeKind(LEGACY, DAY), "full");
+  assert.strictEqual(S.appGradeKind(UNSTARTED, DAY), "new");
+});
+
+test("applyGrade: Fast on today's quick rep from box 5 stays 5, quick, and uses no rep slot", () => {
+  const got = S.applyGrade(quickFrom(5), FAST, DAY, dueFor);
+  assert.deepStrictEqual([got.box, got.due, got.kind, got.attempts], [5, "+5", "quick", 4]);
+  assert.ok(!("started" in got));
+  assert.strictEqual(S.repsLeft([got], DAY, S.WINDOW_SIZE), S.WINDOW_SIZE);
+  const again = S.applyGrade(got, FAST, DAY, dueFor);
+  assert.deepStrictEqual([again.box, again.kind], [5, "quick"], "a second correction too");
+});
+
+test("applyGrade: Fast on today's quick rep from box 4 gives box 5", () => {
+  const got = S.applyGrade(quickFrom(4), FAST, DAY, dueFor);
+  assert.deepStrictEqual([got.box, got.kind], [5, "quick"]);
+});
+
+test("applyGrade: a quick rep from an earlier day graded in the app is a full rep", () => {
+  const old = { ...quickFrom(5), last: "2026-10-11" };
+  const got = S.applyGrade(old, FAST, DAY, dueFor);
+  assert.deepStrictEqual([got.box, got.kind, got.attempts], [6, "full", 5]);
+  assert.strictEqual(S.repsLeft([got], DAY, S.WINDOW_SIZE), S.WINDOW_SIZE - 1);
 });
 
 test("mondayOf: steps back to Monday, across month, year and leap day", () => {

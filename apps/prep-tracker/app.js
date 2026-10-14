@@ -1130,7 +1130,8 @@ function panelHTML(p, st, hideCat) {
   const pid = id(p);
   const gradedToday = isDoneToday(p);
   const base = regradeBase(st, todayISO());
-  const kind = gradeKind(base);
+  const kind = appGradeKind(st, todayISO());
+  const labels = kind === "new" ? "new" : "full";
   const options = GRADES.map((g) => ({
     g, days: INTERVAL[nextBox(base.box, g.box, kind)],
     chosen: gradedToday && g.box === Math.min(st.box, 4),
@@ -1163,7 +1164,7 @@ function panelHTML(p, st, hideCat) {
     `<button class="grade" data-grade="${g.box}">` +
       `<span class="grade__top">${g.label}` +
       `<span class="grade__days${g.days ? " grade__days--" + g.days : ""}">+${days}d</span></span>` +
-      `<span class="grade__sub">${g[kind]}</span>` +
+      `<span class="grade__sub">${g[labels]}</span>` +
     `</button>`
   ).join("");
   let note = noteHTML(pid, "Trigger sentence — what tips you off to the pattern?", st.trigger, false);
