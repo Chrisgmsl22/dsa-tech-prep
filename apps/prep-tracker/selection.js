@@ -11,6 +11,7 @@
  *   cat       - category slug, must be a key of some TIERS entry
  *   box       - Leitner box, 1..6
  *   daysUntil - days until due; NEGATIVE means overdue by that many days
+ *   last      - ISO date of the last grade; repWindow() skips one graded today
  * ========================================================================== */
 
 // Leitner intervals (days) keyed by box. grade.py keeps a copy; change both.
