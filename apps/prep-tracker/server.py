@@ -68,7 +68,8 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=HERE, **kwargs)
 
     def _route(self):
-        return self.path.split("?", 1)[0]
+        # A malformed request line reaches send_error() before self.path is set.
+        return getattr(self, "path", "").split("?", 1)[0]
 
     def end_headers(self):
         # Static files revalidate on every load, or a reload keeps running

@@ -151,6 +151,20 @@ try:
     _, h, _ = req("GET")
     check("the API keeps no-store", h.get("Cache-Control") == "no-store", h.get("Cache-Control"))
 
+    print("=== a malformed request line still gets a 400 ===")
+    def raw(request_line):
+        with socket.create_connection(("127.0.0.1", PORT), 5) as s:
+            s.sendall(request_line + b"\r\n\r\n")
+            reply = b""
+            while chunk := s.recv(4096):
+                reply += chunk
+        return reply
+    # The stdlib answers a bad version HTTP/0.9 style: the body, no status line.
+    check("a bad version gets the 400 body", b"Error code: 400" in raw(b"GET / BADVER"))
+    line = raw(b"GET / extra HTTP/1.1").split(b"\r\n", 1)[0]
+    check("too many words gets an HTTP/1.x 400 status line",
+          line.startswith(b"HTTP/1.") and line.split()[1:2] == [b"400"], line)
+
     print("=== path traversal ===")
     st, _, _ = req("GET", "/../CLAUDE.md")
     check("traversal 404s", st in (404, 400), st)
