@@ -56,7 +56,7 @@ An empty `{}` fixture will seed itself from the catalog on first load, exactly l
 ```bash
 cd apps/prep-tracker && node --test               # selection logic: window, boxes, new-problem order
 .venv/bin/python -m pytest apps/prep-tracker      # grade.py, plus the server safety script
-python3 apps/prep-tracker/server_test.py          # persistence safety on its own (22 cases)
+python3 apps/prep-tracker/server_test.py          # persistence safety on its own (26 cases)
 ```
 
 No install step for the app — Node's built-in test runner and the Python stdlib; pytest comes from
@@ -78,8 +78,9 @@ one new problem.*), the stat strip, and three steps in order:
    grade and does not refill: at 0 the step reads **Reps done for today**, and **show all**
    has more if you want them. New problems and quick reps do not use up the 3.
 3. **New problem.** The next one in the PRACTICE.md order, with a weekly counter
-   (`this week N/2`). This card shows the category: a first attempt studies the pattern first. At 2 it stays visible as a **stretch**; at 3 the step says
-   **week done** and shows no problem. The quota is weekly, so a missed day moves nothing.
+   (`this week N/2`). This card shows the category: a first attempt studies the pattern
+   first. At 2 it stays visible as a **stretch**; at 3 the step says **week done** and
+   shows no problem. The quota is weekly, so a missed day moves nothing.
 
 **Grading.** Click a problem and press one of the four buttons. Each sub-label is the
 PRACTICE.md "How to grade" check: the new-problem checks for a problem at box 0 (never
@@ -139,7 +140,7 @@ entries count as reps, not new problems. Older entries without these fields keep
 - **Today** — the three steps above. The badge counts the reps still to do in today's window
   (0 to 3), the same rows the window shows, not the backlog. **show all** lists the whole backlog.
 - **New** — the ~68 problems you haven't started yet, grouped by category in the PRACTICE.md
-  order, so the top row is the one Today offers next. Grading one pulls it into the rotation.
+  order, so the first ungraded row is the one Today offers next. Grading one pulls it into the rotation.
 - **All** — all 129 problems, each with a 6-cell box meter and its next-review date.
 - **Sprint** — a one-off problem list for a specific interview (see section 7). Empty between
   interviews, and separate from everything above.

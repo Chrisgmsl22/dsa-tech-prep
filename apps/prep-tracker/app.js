@@ -1068,6 +1068,7 @@ function repRowHTML(p) {
 }
 
 function meterHTML(box) {
+  box = Number(box) || 0;
   const label = box ? `Box ${box} of 6` : "Not started";
   let cells = "";
   for (let i = 1; i <= 6; i++) cells += `<span class="meter__cell${i <= box ? " is-on" : ""}"></span>`;
@@ -1080,7 +1081,10 @@ function listRowHTML(p, meter) {
   const pid = id(p);
   const open = pid === OPEN_ID;
   let status;
-  if (isDoneToday(p)) status = `<span class="row__status is-graded">graded ${gradeOf(st.box).label}</span>`;
+  if (isDoneToday(p)) {
+    const g = gradeOf(st.box);
+    status = `<span class="row__status is-graded">graded ${g ? g.label : "?"}</span>`;
+  }
   else if (st.box === 0) status = `<span class="row__status">new</span>`;
   else status = `<span class="row__status">${dueText(st)}</span>`;
 
@@ -1477,7 +1481,13 @@ listEl.addEventListener("click", (e) => {
   if (!toggle) return;
   const pid = toggle.closest("[data-id]").dataset.id;
   OPEN_ID = OPEN_ID === pid ? null : pid;
+  const keepFocus = !FOCUS_TRIGGER;
   render();
+  // render() replaced the button, so a keyboard user would land back on <body>.
+  if (keepFocus) {
+    const again = listEl.querySelector(`[data-id="${CSS.escape(pid)}"] [data-toggle]`);
+    if (again) again.focus({ preventScroll: true });
+  }
 });
 
 listEl.addEventListener("input", (e) => {
