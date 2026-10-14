@@ -152,6 +152,51 @@ def test_apply_unknown_key_is_exit_code_2():
     assert e.value.code == 2
 
 
+# ---------- prev: same cases as selection.test.js (plan rev 6) ----------
+
+def test_first_grade_of_the_day_stores_prev():
+    _, got = grade.apply_grade({"k#1": dict(LEGACY)}, "k#1", "pass", TODAY)
+    assert got["prev"] == {"box": 4, "due": "2026-10-01", "last": "2026-09-10", "attempts": 2}
+
+
+def test_prev_keeps_null_and_omits_absent_fields():
+    _, got = grade.apply_grade({"k#1": dict(TRIAGE)}, "k#1", "pass", TODAY)
+    assert got["prev"] == {"box": 2, "due": "2026-09-01", "last": None, "attempts": 0}
+    assert "prev" not in got["prev"]
+
+
+def test_a_same_day_grade_keeps_prev_and_starts_from_it():
+    prev = {"box": 4, "due": "2026-10-01", "last": "2026-09-10", "attempts": 2}
+    graded = entry(box=1, last="2026-10-12", attempts=3, kind="full", prev=prev)
+    _, got = grade.apply_grade({"k#1": graded}, "k#1", "pass", TODAY)
+    assert got["prev"] == prev
+    assert (got["box"], got["attempts"]) == (5, 3), "from prev box 4, counted once"
+
+
+def test_a_grade_on_a_new_day_writes_a_fresh_prev():
+    yesterday = entry(box=5, last="2026-10-11", attempts=3, kind="quick", prev={"box": 4})
+    _, got = grade.apply_grade({"k#1": yesterday}, "k#1", "pass", TODAY)
+    assert got["prev"] == {"box": 5, "due": "2026-10-01", "last": "2026-10-11",
+                           "attempts": 3, "kind": "quick"}
+
+
+def test_graded_today_without_prev_starts_from_the_current_entry():
+    cur = entry(box=5, last="2026-10-12", attempts=3)
+    assert grade.regrade_base(cur, "2026-10-12") is cur
+
+
+def test_a_same_day_grade_never_writes_started():
+    prev = {"box": 4, "due": "2026-10-01", "last": "2026-09-10", "attempts": 2}
+    graded = entry(box=5, last="2026-10-12", attempts=3, kind="full", prev=prev)
+    for result in ("pass", "fail"):
+        _, got = grade.apply_grade({"k#1": graded}, "k#1", result, TODAY)
+        assert "started" not in got
+
+
+def test_prev_fields_match_selection_js():
+    assert grade.PREV_FIELDS == ("box", "due", "last", "attempts", "kind")
+
+
 # ---------- the CLI, file path (no server listening) ----------
 
 @pytest.fixture

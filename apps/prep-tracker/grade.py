@@ -68,26 +68,49 @@ def quick_grade(entry, result):
     return CLEAN
 
 
+# Twin of PREV_FIELDS in selection.js. Change both.
+PREV_FIELDS = ("box", "due", "last", "attempts", "kind")
+
+
+def prev_of(entry):
+    """Twin of prevOf(). A field the entry never had stays out."""
+    return {f: entry[f] for f in PREV_FIELDS if f in entry}
+
+
+def regrade_base(entry, today_iso):
+    """Twin of regradeBase(): a second grade on the same day starts from the
+    entry as it was before the first, so the app's re-grade and this CLI agree."""
+    if entry.get("last") != today_iso or not isinstance(entry.get("prev"), dict):
+        return entry
+    base = {k: v for k, v in entry.items() if k not in PREV_FIELDS}
+    base.update(entry["prev"])
+    return base
+
+
 def apply_grade(state, key, result, today):
     """Return (old_box, new_entry). Does not mutate `state`.
 
     Never writes `started`: a quick rep is never a first attempt, and a
     started date would count the problem as new this week (PRACTICE.md).
+    The first grade of a day stores `prev`; a same-day grade keeps it.
     """
     entry = state.get(key)
     if not isinstance(entry, dict):
         raise GradeError(f"unknown key {key!r}: not in progress.json", code=2)
-    old_box = entry.get("box") or 0
-    box = next_box(old_box, quick_grade(entry, result), "quick")
-    new = dict(entry)
+    today_iso = today.isoformat()
+    base = regrade_base(entry, today_iso)
+    box = next_box(base.get("box") or 0, quick_grade(base, result), "quick")
+    new = dict(base)
     new.update(
         box=box,
         due=(today + datetime.timedelta(days=INTERVAL[box])).isoformat(),
-        last=today.isoformat(),
-        attempts=(entry.get("attempts") or 0) + 1,
+        last=today_iso,
+        attempts=(base.get("attempts") or 0) + 1,
         kind="quick",
     )
-    return old_box, new
+    if entry.get("last") != today_iso:
+        new["prev"] = prev_of(entry)
+    return entry.get("box") or 0, new
 
 
 # ---------- server path ----------
