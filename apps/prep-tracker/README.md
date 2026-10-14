@@ -67,17 +67,18 @@ they never touch your real progress or a tracker running on :8000.
 
 ## 2. The daily loop (how to use it)
 
-The **Due today** tab opens on the **Today card**, three steps in order:
+The **Today** tab opens with a headline that sums up what is left (for example *Two reps left,
+one new problem.*), the stat strip, and three steps in order:
 
 1. **Quick rep.** Run `/quick-rep` in Claude Code (10 min). The step ticks itself once a
    quick-rep grade lands today (see `grade.py` below). On a rough day this alone is a win.
 2. **Reps.** The 3-problem window. Weak buckets (red/amber) sort to the top. Solve each one
    **blind**, then click it and grade. The row shows **no category** until you grade it, and
    the file path hides too: spotting the pattern is part of the rep. The window shrinks as you
-   grade and does not refill: at 0 the step reads **Reps done for today**, and **Show all**
+   grade and does not refill: at 0 the step reads **Reps done for today**, and **show all**
    has more if you want them. New problems and quick reps do not use up the 3.
 3. **New problem.** The next one in the PRACTICE.md order, with a weekly counter
-   (`this week: N/2`). At 2 it stays visible as a **stretch**; at 3 the step says
+   (`this week N/2`). This card shows the category: a first attempt studies the pattern first. At 2 it stays visible as a **stretch**; at 3 the step says
    **week done** and shows no problem. The quota is weekly, so a missed day moves nothing.
 
 **Grading.** Click a problem and press one of the four buttons. Each sub-label is the
@@ -135,17 +136,21 @@ entries count as reps, not new problems. Older entries without these fields keep
 
 ## 3. The tabs
 
-- **Due today** — the Today card. The badge counts the reps still to do in today's window
-  (0 to 3), the same rows the window shows, not the backlog. **Show all** lists the whole backlog.
-- **New** — the ~68 problems you haven't started yet, grouped by category (core first).
-  Grading one for the first time pulls it into the rotation.
-- **All** — all 129 problems with every problem's current box and next-review date.
+- **Today** — the three steps above. The badge counts the reps still to do in today's window
+  (0 to 3), the same rows the window shows, not the backlog. **show all** lists the whole backlog.
+- **New** — the ~68 problems you haven't started yet, grouped by category in the PRACTICE.md
+  order, so the top row is the one Today offers next. Grading one pulls it into the rotation.
+- **All** — all 129 problems, each with a 6-cell box meter and its next-review date.
 - **Sprint** — a one-off problem list for a specific interview (see section 7). Empty between
   interviews, and separate from everything above.
 - **How it works** — an in-app summary of everything here.
 
-Use the **category chips** under the tabs to filter any view down to one category (handy for a
-focused "just drill Two Pointers today" session).
+Use the **category chips** under the stat strip to filter any view down to one category (handy
+for a focused "just drill Two Pointers today" session). A ★ marks a core (tier 1) category.
+
+The look is the "Notebook" design: light paper, IBM Plex Sans and IBM Plex Mono. The fonts are
+IBM Plex under the SIL Open Font License, served from `fonts/`, so the app makes no font request
+to the internet.
 
 ---
 
@@ -153,10 +158,10 @@ focused "just drill Two Pointers today" session).
 
 Across the top:
 
-- **This week** — `New this week: N/2 · Reps this week: M`, Monday to Sunday. N counts
+- **New this week** — `N/2`, with `· M reps` under it, Monday to Sunday. N counts
   problems whose `started` date is this week; M counts the other problems graded this week. It
   replaces the old due count on purpose: the week is the unit, not the pile.
-- **Solved locally** — how many of the 129 have a solution file in `patterns/` (60 as of the
+- **Solved** — how many of the 129 have a solution file in `patterns/` (60 as of the
   2026-08 sprint merge).
 - **Core solved** — your coverage of the 4 core categories (the interview bread-and-butter).
 - **Box 4 and up** — problems you've graded **Fast** at least once and not missed since.
@@ -236,7 +241,7 @@ It is a **checklist with memory, not a second scheduler**:
 
 - No Leitner box, no due date, **no calendar**. Day names are labels for chunks of the list, not
   deadlines — nothing turns red and falling a day behind costs nothing.
-- Nothing in the Sprint tab can ever appear in **Due today**.
+- Nothing in the Sprint tab can ever appear on **Today**.
 - Mark each problem **Done**, **Stuck**, or **Skipped**. Clicking the active status clears it.
 - The trigger-sentence field works exactly as it does in the review flow, and it survives the
   merge below.

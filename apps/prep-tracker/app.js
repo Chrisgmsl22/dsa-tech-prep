@@ -214,14 +214,14 @@ const PROBLEMS = [
 // self-grading is a measurement rather than a mood. A first attempt has a
 // 60-minute cap and a full rep 35, so the two sets of checks differ.
 const GRADES = [
-  { box: 1, cls: "g1", label: "Failed",
-    full: "no pass at 35 min, or saw the solution", new: "read the solution, or hit 60 min" },
-  { box: 2, cls: "g2", label: "Slow",
-    full: "hint, 26–35 min, or 3+ wrong submits",   new: "pattern hint, or >40 min" },
-  { box: 3, cls: "g3", label: "Clean",
-    full: "no hint, 16–25 min",                     new: "no hint, 21–40 min" },
-  { box: 4, cls: "g4", label: "Fast",
-    full: "no hint, ≤15 min",                       new: "no hint, ≤20 min" },
+  { box: 1, days: "fail", label: "Failed",
+    full: "No pass at 35 min, or saw the solution", new: "Read the solution, or hit 60 min" },
+  { box: 2, days: "",     label: "Slow",
+    full: "Hint, 26–35 min, or 3+ wrong submits",   new: "Pattern hint, or >40 min" },
+  { box: 3, days: "good", label: "Clean",
+    full: "No hint, 16–25 min",                     new: "No hint, 21–40 min" },
+  { box: 4, days: "good", label: "Fast",
+    full: "No hint, ≤15 min",                       new: "No hint, ≤20 min" },
 ];
 // Boxes 5 and 6 are only reachable through Fast, so they wear its label.
 function gradeOf(box) { return GRADES.find((g) => g.box === Math.min(box, 4)); }
@@ -609,23 +609,28 @@ function isDoneToday(p) {
 
 /* ---------- rendering ---------- */
 const listEl = document.getElementById("list");
+const introEl = document.getElementById("intro");
 const statsEl = document.getElementById("stats");
 const filterEl = document.getElementById("filter");
 const dueBadge = document.getElementById("dueBadge");
 const sprintBadge = document.getElementById("sprintBadge");
 
 function render() {
+  document.getElementById("catalogSize").textContent = PROBLEMS.length;
+  document.querySelectorAll(".tab").forEach((t) => {
+    if (t.dataset.view === VIEW) t.setAttribute("aria-current", "page");
+    else t.removeAttribute("aria-current");
+  });
+
   // A halted app must not draw lists as though the data were trustworthy.
   if (isHalted()) {
     renderHalt();
     return;
   }
+  renderIntro();
   renderStats();
   renderFilter();
   renderList();
-  document.querySelectorAll(".tab").forEach((t) =>
-    t.classList.toggle("is-active", t.dataset.view === VIEW)
-  );
 
   // The graded row moves down into "Done today", so follow it and land the
   // cursor in the note field — otherwise you'd have to hunt for where it went.
@@ -643,7 +648,8 @@ function render() {
 /* The halt panel replaces the whole list. There is deliberately no "continue
  * anyway" button: every path that destroyed history did so by carrying on. */
 function renderHalt() {
-  filterEl.style.display = "none";
+  introEl.innerHTML = "";
+  filterEl.innerHTML = "";
   statsEl.innerHTML = "";
   dueBadge.textContent = "0";
   sprintBadge.textContent = "0";
@@ -651,31 +657,31 @@ function renderHalt() {
   if (LOCAL_AHEAD) {
     const n = LOCAL_AHEAD.keys.length;
     listEl.innerHTML =
-      `<div class="help halt">` +
-        `<h2>&#9888; This browser holds ${n} change${n === 1 ? "" : "s"} the repo file does not</h2>` +
+      `<section class="card halt">` +
+        `<h2>This browser holds ${n} change${n === 1 ? "" : "s"} the repo file does not</h2>` +
         `<p>Saving now would discard ${n === 1 ? "it" : "them"}, so writes are paused until you choose. ` +
         `This usually means the server died, or the file was restored from git while a tab was open.</p>` +
-        `<p class="history">${LOCAL_AHEAD.keys.map(escapeHTML).join(", ")}</p>` +
-        `<div class="foot__actions">` +
-          `<button class="ghost" id="haltExport">Export a backup first</button>` +
-          `<button class="ghost" id="haltMerge">Merge — keep the newer of each</button>` +
-          `<button class="ghost danger" id="haltDiscard">Discard this browser&#39;s copy</button>` +
+        `<p class="halt__keys">${LOCAL_AHEAD.keys.map(escapeHTML).join(", ")}</p>` +
+        `<div class="actions">` +
+          `<button class="btn-line" id="haltExport">Export a backup first</button>` +
+          `<button class="btn-line" id="haltMerge">Merge — keep the newer of each</button>` +
+          `<button class="btn-line btn-line--danger" id="haltDiscard">Discard this browser&#39;s copy</button>` +
         `</div>` +
-      `</div>`;
+      `</section>`;
     return;
   }
 
   listEl.innerHTML =
-    `<div class="help halt">` +
-      `<h2>&#9888; ${escapeHTML(HALT.title)}</h2>` +
+    `<section class="card halt">` +
+      `<h2>${escapeHTML(HALT.title)}</h2>` +
       `<p>${escapeHTML(HALT.detail)}</p>` +
       `<p>Nothing will be written until this is resolved. That is deliberate — ` +
       `saving over a file the app has misread is how history gets lost.</p>` +
-      `<div class="foot__actions">` +
-        `<button class="ghost" id="haltExport">Export what this tab has</button>` +
-        `<button class="ghost" id="haltReload">Reload</button>` +
+      `<div class="actions">` +
+        `<button class="btn-line" id="haltExport">Export what this tab has</button>` +
+        `<button class="btn-line" id="haltReload">Reload</button>` +
       `</div>` +
-    `</div>`;
+    `</section>`;
 }
 
 /* "merge" keeps the mirror's entry for each diverged key; "discard" keeps the
@@ -718,6 +724,52 @@ function thisWeek() {
   return weeklyCounts(Object.values(STATE), start, end);
 }
 
+/* Step 3's state, shared by the h1 and the step itself. The quota is weekly,
+ * so a missed day moves nothing; past the stretch the week is done, because
+ * more new problems would starve the reps that keep the first ones. */
+function newStepState() {
+  const n = thisWeek().newCount;
+  if (n >= NEW_STRETCH) return "done";
+  if (!suggestNewProblem()) return "none";
+  return n >= NEW_PER_WEEK ? "stretch" : "todo";
+}
+
+function introHTML(eyebrow, title, sub, hero) {
+  return (
+    `<div class="eyebrow">${eyebrow}</div>` +
+    `<h1 class="intro__title${hero ? " intro__title--hero" : ""}">${title}</h1>` +
+    (sub ? `<p class="intro__sub">${sub}</p>` : "")
+  );
+}
+
+function renderIntro() {
+  introEl.className = "intro";
+  if (VIEW === "due") {
+    const day = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+    introEl.innerHTML = introHTML(
+      `${day} · Session`,
+      todayHeadline(todayWindow().length, newStepState()),
+      "Solve blind, grade honestly, write down what tipped you off. The boxes decide when you see it again.",
+      true
+    );
+  } else if (VIEW === "new") {
+    introEl.innerHTML = introHTML(
+      "Not started · in PRACTICE.md order", "New problems",
+      "Two a week is the target, a third is a stretch. The Today page always pulls the next one in order."
+    );
+  } else if (VIEW === "all") {
+    introEl.innerHTML = introHTML(`AlgoMap roadmap · ${PROBLEMS.length} problems`, "All problems");
+  } else if (VIEW === "sprint") {
+    introEl.innerHTML = introHTML(
+      "One-off problem list", "Sprint",
+      SPRINT.length ? escapeHTML(SPRINT_META.format) : "A checklist for a specific interview. Empty between interviews."
+    );
+  } else {
+    introEl.className = "intro intro--help";
+    introEl.innerHTML = HELP_INTRO_HTML;
+  }
+}
+
 function renderStats() {
   const solvedCount = PROBLEMS.filter((p) => p.s).length;
   const coreTotal = PROBLEMS.filter((p) => CORE.has(p.cat)).length;
@@ -728,6 +780,11 @@ function renderStats() {
   dueBadge.textContent = todayWindow().length;
   sprintBadge.textContent = sprintDone;
 
+  if (VIEW === "help") {
+    statsEl.innerHTML = "";
+    return;
+  }
+
   // The sprint answers a different question from the rotation: not "how deep is
   // my memory" but "how much of the list have I covered, and where am I stuck".
   if (VIEW === "sprint" && SPRINT.length) {
@@ -736,80 +793,52 @@ function renderStats() {
     const stuck = SPRINT.filter((s) => sprog(s).status === "stuck").length;
     const noted = SPRINT.filter((s) => (sprog(s).trigger || "").trim()).length;
     statsEl.innerHTML = [
-      stat("due", stuck, "marked stuck"),
-      stat("core", `${essentialDone}/${essential.length}`, "essential done"),
-      stat("solved", `${sprintDone}/${SPRINT.length}`, "sprint done"),
-      stat("", noted, "trigger notes"),
+      stat(fraction(sprintDone, SPRINT.length), "sprint done", true),
+      stat(fraction(essentialDone, essential.length), "essential done"),
+      stat(stuck, "marked stuck"),
+      stat(noted, "trigger notes"),
     ].join("");
     return;
   }
 
   const week = thisWeek();
   statsEl.innerHTML = [
-    stat("due stat--week",
-      `New this week: ${week.newCount}/${NEW_PER_WEEK} · Reps this week: ${week.reps}`,
-      "Monday to Sunday"),
-    stat("solved", `${solvedCount}/${PROBLEMS.length}`, "solved locally"),
-    stat("core", `${coreSolved}/${coreTotal}`, "core solved"),
-    stat("", mastered, "box 4 and up"),
+    stat(fraction(week.newCount, NEW_PER_WEEK),
+      `new this week · ${week.reps} rep${week.reps === 1 ? "" : "s"}`, true),
+    stat(fraction(solvedCount, PROBLEMS.length), "solved"),
+    stat(fraction(coreSolved, coreTotal), "core solved"),
+    stat(mastered, "box 4 and up"),
   ].join("");
 }
-function stat(mod, num, label) {
+function fraction(n, of) { return `${n}<span class="stat__of">/${of}</span>`; }
+function stat(num, label, accent) {
   return (
-    `<div class="stat ${mod ? "stat--" + mod : ""}">` +
-    `<div class="stat__num">${num}</div>` +
-    `<div class="stat__label">${label}</div></div>`
+    `<div class="stat">` +
+    `<span class="stat__num${accent ? " stat__num--accent" : ""}">${num}</span>` +
+    `<span class="stat__label">${label}</span></div>`
   );
 }
 
 function renderFilter() {
   // AlgoMap category chips mean nothing inside the sprint, which groups by day.
-  filterEl.style.display = VIEW === "sprint" ? "none" : "";
-  if (VIEW === "sprint") return;
-
+  if (VIEW === "sprint" || VIEW === "help") {
+    filterEl.innerHTML = "";
+    return;
+  }
   const cats = ["all", ...CAT_ORDER];
   filterEl.innerHTML = cats
     .map((c) => {
-      const label = c === "all" ? "All" : CAT_META[c].label;
-      const core = c !== "all" && CORE.has(c) ? " is-core" : "";
-      const active = c === CAT_FILTER ? " is-active" : "";
-      return `<button class="chip${core}${active}" data-cat="${c}">${label}</button>`;
+      const core = c !== "all" && CORE.has(c);
+      const label = c === "all" ? "All" : (core ? "★ " : "") + escapeHTML(CAT_META[c].label);
+      return (
+        `<button class="chip${core ? " is-core" : ""}" data-cat="${c}" ` +
+        `aria-pressed="${c === CAT_FILTER}">${label}</button>`
+      );
     })
     .join("");
 }
 
-function visibleProblems() {
-  let items = PROBLEMS.slice();
-  if (VIEW === "due") items = items.filter(isDue);
-  // Keep a problem visible in New after you grade it. The filter used to be
-  // box === 0 alone, so grading made the row disappear on the spot -- and the
-  // trigger-note prompt went with it, because FOCUS_TRIGGER had no open row to
-  // land in. That is the daily path now ("3 reps + 1 new"), so it has to hold.
-  else if (VIEW === "new") items = items.filter((p) => !p.s && (prog(p).box === 0 || isDoneToday(p)));
-  // "all" => everything
-  if (CAT_FILTER !== "all") items = items.filter((p) => p.cat === CAT_FILTER);
-  return items;
-}
-
-/* Header strip above the Due list, plus today's grading count — derived from
- * the `last` field that gradeProblem() already writes. The backlog total shows
- * only after "Show all": by default the day is the unit, not the pile. */
-function windowNoteHTML(shown, total) {
-  const gradedToday = Object.values(STATE).filter((s) => s && s.last === todayISO()).length;
-  let toggle = "";
-  if (SHOW_ALL) {
-    toggle = `<button class="ghost" id="windowToggle">Show window</button>`;
-  } else if (total > shown) {
-    toggle = `<button class="ghost" id="windowToggle">Show all</button>`;
-  }
-  let scope = `<strong>${shown}</strong> of ${WINDOW_SIZE} reps left today`;
-  if (SHOW_ALL) scope = `Showing all <strong>${total}</strong> due`;
-  else if (CAT_FILTER !== "all") scope = `Showing <strong>${shown}</strong> in this category`;
-  return (
-    `<div class="window-note">` +
-    `<span>${scope} · <strong>${gradedToday}</strong> graded today</span>${toggle}</div>`
-  );
-}
+function inFilter(p) { return CAT_FILTER === "all" || p.cat === CAT_FILTER; }
 
 // The plain shape selection.js expects, with a back-reference to the problem.
 function dueCandidates(problems) {
@@ -822,74 +851,69 @@ function dueCandidates(problems) {
 }
 
 function renderList() {
-  if (VIEW === "help") {
-    listEl.innerHTML = HELP_HTML;
-    return;
-  }
-  if (VIEW === "sprint") {
-    renderSprintList();
-    return;
-  }
+  if (VIEW === "help") listEl.innerHTML = HELP_HTML;
+  else if (VIEW === "sprint") renderSprintList();
+  else if (VIEW === "due") renderToday();
+  else if (VIEW === "new") renderNewList();
+  else renderAllList();
+}
 
-  const items = visibleProblems();
+function renderToday() {
+  const candidates = dueCandidates(PROBLEMS.filter((p) => isDue(p) && inFilter(p)));
 
-  if (VIEW === "due") {
-    const candidates = dueCandidates(items);
-
-    let picked;
-    if (SHOW_ALL) {
-      picked = candidates.slice().sort(comparePriority);
-    } else if (CAT_FILTER === "all") {
-      picked = todayWindow();
-    } else {
-      // Tier quotas are meaningless inside a single category — just cap.
-      picked = candidates.slice().sort(comparePriority).slice(0, WINDOW_SIZE);
-    }
-
-    const done = PROBLEMS
-      .filter((p) => (CAT_FILTER === "all" || p.cat === CAT_FILTER) && isDoneToday(p))
-      .sort((a, b) => catRank(a.cat) - catRank(b.cat) || a.n - b.n);
-
-    // Reps done with more still due: the window note's "Show all" is the
-    // way on, so "Nothing due today" would be wrong here.
-    const noRepsLeft = !SHOW_ALL && CAT_FILTER === "all" && !picked.length;
-    let body = picked.map((x) => rowHTML(x.problem, { hideCat: true })).join("");
-    if (!picked.length && !(noRepsLeft && candidates.length)) {
-      body = `<p class="empty">${emptyMessage()}</p>`;
-    }
-    const reps = windowNoteHTML(picked.length, candidates.length) + body;
-
-    // A filtered view is a focused drill, not the daily plan.
-    listEl.innerHTML =
-      (CAT_FILTER === "all" ? todayCardHTML(reps, noRepsLeft) : reps) + doneSectionHTML(done);
-    return;
+  let picked;
+  if (SHOW_ALL) {
+    picked = candidates.slice().sort(comparePriority);
+  } else if (CAT_FILTER === "all") {
+    picked = todayWindow();
+  } else {
+    // Tier quotas are meaningless inside a single category — just cap.
+    picked = candidates.slice().sort(comparePriority).slice(0, WINDOW_SIZE);
   }
 
-  if (items.length === 0) {
-    listEl.innerHTML = `<p class="empty">${emptyMessage()}</p>`;
-    return;
+  const done = PROBLEMS
+    .filter((p) => inFilter(p) && isDoneToday(p))
+    .sort((a, b) => catRank(a.cat) - catRank(b.cat) || a.n - b.n);
+
+  // Reps done with more still due: the "show all" link is the way on, so
+  // "Nothing due today" would be wrong here.
+  const noRepsLeft = !SHOW_ALL && CAT_FILTER === "all" && !picked.length;
+  let body = picked.length
+    ? `<ol class="rows">${picked.map((x) => repRowHTML(x.problem)).join("")}</ol>`
+    : "";
+  if (!picked.length && !(noRepsLeft && candidates.length)) {
+    body = `<p class="empty">${emptyMessage()}</p>`;
   }
 
-  // "new" / "all": group by category.
-  const groups = {};
-  for (const p of items) (groups[p.cat] ||= []).push(p);
-  const cats = Object.keys(groups).sort((a, b) => {
-    const ca = CORE.has(a) ? 0 : 1, cb = CORE.has(b) ? 0 : 1;
-    if (ca !== cb) return ca - cb;
-    return catRank(a) - catRank(b);
-  });
+  // A filtered view is a focused drill, not the daily plan.
+  const daily = CAT_FILTER === "all";
+  const title = noRepsLeft ? "Reps done for today" : "Reps";
+  const reps =
+    `<section class="block">` +
+      `<div class="block__head">` +
+        `<h2 class="block__title">${daily ? '<span class="step-num">02</span>' : ""}${title}</h2>` +
+        windowNoteHTML(picked.length, candidates.length) +
+      `</div>` +
+      body +
+    `</section>`;
 
-  listEl.innerHTML = cats
-    .map((c) => {
-      const rows = groups[c].sort((a, b) => a.n - b.n).map(rowHTML).join("");
-      const coreTag = CORE.has(c) ? '<span class="core-tag">core</span>' : "";
-      return (
-        `<div class="group__head"><h2>${CAT_META[c].glyph} ${CAT_META[c].label}</h2>` +
-        `${coreTag}<span class="group__count">${groups[c].length}</span></div>` +
-        rows
-      );
-    })
-    .join("");
+  listEl.innerHTML = (daily ? quickStepHTML() + reps + newStepHTML() : reps) + doneSectionHTML(done);
+}
+
+/* Beside the Reps heading. The backlog total shows only after "show all": by
+ * default the day is the unit, not the pile. */
+function windowNoteHTML(shown, total) {
+  const gradedToday = Object.values(STATE).filter((s) => s && s.last === todayISO()).length;
+  let toggle = "";
+  if (SHOW_ALL) {
+    toggle = ` · <button class="link-btn" id="windowToggle">show window</button>`;
+  } else if (total > shown) {
+    toggle = ` · <button class="link-btn" id="windowToggle">show all</button>`;
+  }
+  let scope = `${shown} of ${WINDOW_SIZE} left`;
+  if (SHOW_ALL) scope = `all ${total} due`;
+  else if (CAT_FILTER !== "all") scope = `${shown} in this category`;
+  return `<span class="block__aside">${scope} · ${gradedToday} graded${toggle}</span>`;
 }
 
 /* The order rule lives in selection.js. Catalog order is PROBLEMS order, so
@@ -902,51 +926,72 @@ function suggestNewProblem() {
   return pick ? pick.problem : null;
 }
 
-/* The day in PRACTICE.md order: the floor first (one quick rep keeps the
- * streak), then the reps, then growth. Growth lives here, not only in the New
- * tab, because a step you have to remember is a step that stops happening. */
-function todayCardHTML(repsHTML, repsDone) {
+/* Step 1 of the day in PRACTICE.md order: the floor. One quick rep keeps the
+ * streak, so it ticks itself when grade.py records one today. */
+function quickStepHTML() {
   const today = todayISO();
-  const quickDone = Object.values(STATE).some((s) => s && s.kind === "quick" && s.last === today);
+  const done = Object.values(STATE).some((s) => s && s.kind === "quick" && s.last === today);
   return (
-    `<section class="today">` +
-      `<div class="today__step${quickDone ? " is-done" : ""}">` +
-        `<span class="today__num">${quickDone ? "✓" : "1"}</span>` +
-        `<span>Start with a quick rep: run <code>/quick-rep</code> in Claude Code (10 min)</span>` +
-      `</div>` +
-      `<div class="today__step${repsDone ? " is-done" : ""}">` +
-        `<span class="today__num">${repsDone ? "✓" : "2"}</span>` +
-        `<span>${repsDone ? "Reps done for today" : "Reps"}</span>` +
-      `</div>` +
-      repsHTML +
-      newStepHTML() +
+    `<section class="quick${done ? " is-done" : ""}" aria-label="Step 1: quick rep">` +
+      `<span class="quick__num">${done ? "✓" : "01"}</span>` +
+      `<span class="quick__text">Warm up with a quick rep — run <code>/quick-rep</code> in Claude Code</span>` +
+      `<span class="quick__time">${done ? "done today" : "10 min"}</span>` +
     `</section>`
   );
 }
 
-/* Step 3. The quota is weekly, so a missed day moves nothing. A third problem
- * is a stretch, not the target, and past it the week is done: more new
- * problems would starve the reps that keep the first ones. */
+/* Step 3. Growth lives on Today, not only in the New tab, because a step you
+ * have to remember is a step that stops happening. */
 function newStepHTML() {
   const n = thisWeek().newCount;
-  let status = `this week: ${n}/${NEW_PER_WEEK}`;
-  if (n >= NEW_STRETCH) status += " · week done";
-  else if (n >= NEW_PER_WEEK) status += " · stretch";
+  const state = newStepState();
+  let aside = `this week ${n}/${NEW_PER_WEEK}`;
+  if (state === "done") aside += " · week done";
+  else if (state === "stretch") aside += " · stretch";
 
-  const head =
-    `<div class="today__step today__step--new">` +
-      `<span class="today__num">3</span><span>New problem</span>` +
-      `<span class="group__count">${status}</span>` +
-    `</div>`;
-  if (n >= NEW_STRETCH) return head;
-
-  const p = suggestNewProblem();
-  if (!p) return head + `<p class="grow__hint">Every problem is started 🎉</p>`;
+  let body;
+  if (state === "done") {
+    body =
+      `<div class="newcard"><span class="newcard__eyebrow">Week done</span>` +
+      `<span class="newcard__copy">That is the stretch reached. The rest of the week is reps, ` +
+      `so the new ones stick.</span></div>`;
+  } else if (state === "none") {
+    body = `<div class="newcard"><span class="newcard__copy">Every problem is started.</span></div>`;
+  } else {
+    body = newCardHTML(suggestNewProblem(), state === "stretch");
+  }
   return (
-    head +
-    rowHTML(p, { hideCat: true }) +
-    `<p class="grow__hint">60-minute cap. If it does not land, grade it <strong>Failed</strong>: ` +
-    `it joins the rotation tomorrow, and that is a finished session.</p>`
+    `<section class="block">` +
+      `<div class="block__head">` +
+        `<h2 class="block__title"><span class="step-num">03</span>New problem</h2>` +
+        `<span class="block__aside">${aside}</span>` +
+      `</div>` +
+      body +
+    `</section>`
+  );
+}
+
+/* The new problem shows its category, unlike a rep: a first attempt studies
+ * the pattern before it starts, so there is nothing to give away. */
+function newCardHTML(p, stretch) {
+  const st = prog(p);
+  const pid = id(p);
+  const open = pid === OPEN_ID;
+  const eyebrow = `${stretch ? "Stretch" : "New"} · ${escapeHTML(CAT_META[p.cat].label)}`;
+  return (
+    `<div class="row newcard${open ? " is-open" : ""}" data-id="${pid}">` +
+      `<div class="newcard__head">` +
+        toggleHTML(open,
+          `<span class="row__main">` +
+            `<span class="newcard__eyebrow">${eyebrow}</span>` +
+            `<span class="row__title">${escapeHTML(p.title)}</span>` +
+            `<span class="newcard__copy">60-minute cap. If it doesn’t land, grade it Failed — it joins ` +
+            `tomorrow’s rotation, and that’s a finished session.</span>` +
+          `</span>`, "Grade →") +
+        (open ? leetcodeLinkHTML(p) : "") +
+      `</div>` +
+      (open ? panelHTML(p, st, false) : "") +
+    `</div>`
   );
 }
 
@@ -954,72 +999,123 @@ function newStepHTML() {
  * after grading instead of disappearing with the row. */
 function doneSectionHTML(done) {
   if (!done.length) return "";
-  const withNotes = done.filter((p) => (prog(p).trigger || "").trim()).length;
-  const missing = done.length - withNotes;
+  const missing = done.filter((p) => !(prog(p).trigger || "").trim()).length;
   const count = missing
-    ? `${done.length} · <span class="done__missing">${missing} without a note</span>`
-    : `${done.length} · all noted`;
+    ? `<span class="block__aside block__aside--warn">${missing} without a note</span>`
+    : `<span class="block__aside">all noted</span>`;
   return (
-    `<div class="group__head done__head">` +
-      `<h2>✓ Done today</h2><span class="group__count">${count}</span>` +
-    `</div>` +
-    done.map(rowHTML).join("")
+    `<section class="block">` +
+      `<div class="block__head"><h2 class="block__title">Done today</h2>${count}</div>` +
+      `<div class="done-list">${done.map(doneArticleHTML).join("")}</div>` +
+    `</section>`
   );
 }
 
 function emptyMessage() {
   if (VIEW === "due")
     return CAT_FILTER === "all"
-      ? "Nothing due today. 🎉 Step 3 below has a new problem, or come back tomorrow."
+      ? "Nothing due today. Step 3 below has a new problem, or come back tomorrow."
       : "Nothing due in this category today.";
   if (VIEW === "new") return "No new problems left in this filter — you've started them all.";
   return "No problems match this filter.";
 }
 
-/* `hideCat`: the Due window hides the category until the problem is graded
- * today, because spotting the pattern is part of the rep. The file path in
- * the panel names the category too, so it hides with it. */
-function rowHTML(p, opts) {
+/* ---------- rows ---------- */
+function leetcodeURL(p) {
+  return "https://leetcode.com/problemset/?search=" + encodeURIComponent(p.title);
+}
+function leetcodeLinkHTML(p) {
+  return `<a class="lc-link" href="${leetcodeURL(p)}" target="_blank" rel="noopener">Open on LeetCode ↗</a>`;
+}
+
+/* The one control that opens and closes a row, so keyboard and screen-reader
+ * users get the same toggle a click does. */
+function toggleHTML(open, inner, cue) {
+  return (
+    `<button class="row__toggle" data-toggle aria-expanded="${open}">` +
+      inner + (!open && cue ? `<span class="row__cue">${cue}</span>` : "") +
+    `</button>`
+  );
+}
+
+function dueText(st) {
+  const d = daysUntil(st.due);
+  if (d < 0) return `<span class="is-late">${-d}d overdue</span>`;
+  if (d === 0) return "due today";
+  return `in ${d}d`;
+}
+
+/* A rep in Today's window. The category stays hidden until the problem is
+ * graded, because spotting the pattern is part of the rep; the file path
+ * names the category too, so it hides with it. */
+function repRowHTML(p) {
   const st = prog(p);
   const pid = id(p);
-  const open = pid === OPEN_ID ? " is-open" : "";
-  const solved = p.s ? " is-solved" : "";
-  const doneToday = isDoneToday(p);
-  const doneCls = doneToday ? " is-done" : "";
-  const hideCat = !!(opts && opts.hideCat) && !doneToday;
-  const cat = doneToday
-    ? `<span class="row__cat">${CAT_META[p.cat].glyph} ${CAT_META[p.cat].label}</span>`
-    : "";
-
-  let meta = "";
-  if (doneToday) {
-    const g = gradeOf(st.box);
-    const noteCls = (st.trigger || "").trim() ? "" : " needs-note";
-    meta =
-      `<span class="row__meta is-graded${noteCls}">` +
-      `${g ? g.label : "graded"} · next in ${daysUntil(st.due)}d` +
-      `${noteCls ? " · no note yet" : ""}</span>`;
-  } else if (st.box === 0) {
-    meta = '<span class="row__meta">new</span>';
-  } else {
-    const d = daysUntil(st.due);
-    let cls = "row__meta", txt;
-    if (d < 0) { cls += " is-overdue"; txt = `${-d}d overdue`; }
-    else if (d === 0) { cls += " is-due"; txt = "due today"; }
-    else { txt = `in ${d}d`; }
-    meta = `<span class="${cls}">box ${st.box} · ${txt}</span>`;
-  }
-
+  const open = pid === OPEN_ID;
+  const meta = st.box === 0 ? "new" : `box ${st.box} · ${dueText(st)}`;
+  const toggle = toggleHTML(open,
+    `<span class="row__main">` +
+      `<span class="row__title">${escapeHTML(p.title)}</span>` +
+      `<span class="row__meta">${meta}</span>` +
+    `</span>`, "Grade →");
+  if (!open) return `<li class="row row--rep" data-id="${pid}">${toggle}</li>`;
   return (
-    `<div class="row box-${st.box}${open}${solved}${doneCls}" data-id="${pid}">` +
-      `<div class="row__top">` +
-        `<span class="row__box"></span>` +
-        `<span class="row__num">${p.n}</span>` +
-        `<span class="row__title">${p.title}</span>` +
-        `${cat}${meta}` +
-      `</div>` +
-      `<div class="row__panel">${panelHTML(p, st, hideCat)}</div>` +
-    `</div>`
+    `<li class="row row--rep is-open" data-id="${pid}">` +
+      `<div class="row__head">${toggle}${leetcodeLinkHTML(p)}</div>` +
+      panelHTML(p, st, true) +
+    `</li>`
+  );
+}
+
+function meterHTML(box) {
+  const label = box ? `Box ${box} of 6` : "Not started";
+  let cells = "";
+  for (let i = 1; i <= 6; i++) cells += `<span class="meter__cell${i <= box ? " is-on" : ""}"></span>`;
+  return `<span class="meter" role="img" aria-label="${label}">${cells}</span>`;
+}
+
+/* New and All. `meter` adds the box meter the All view carries. */
+function listRowHTML(p, meter) {
+  const st = prog(p);
+  const pid = id(p);
+  const open = pid === OPEN_ID;
+  let status;
+  if (isDoneToday(p)) status = `<span class="row__status is-graded">graded ${gradeOf(st.box).label}</span>`;
+  else if (st.box === 0) status = `<span class="row__status">new</span>`;
+  else status = `<span class="row__status">${dueText(st)}</span>`;
+
+  const toggle = toggleHTML(open,
+    `<span class="row__num">${p.n}</span>` +
+    `<span class="row__title">${escapeHTML(p.title)}</span>` +
+    (meter ? meterHTML(st.box) : "") + status);
+  if (!open) return `<li class="row row--list" data-id="${pid}">${toggle}</li>`;
+  return (
+    `<li class="row row--list is-open" data-id="${pid}">` +
+      `<div class="row__head">${toggle}${leetcodeLinkHTML(p)}</div>` +
+      panelHTML(p, st, false) +
+    `</li>`
+  );
+}
+
+/* Done today shows the category back: the rep is over. */
+function doneArticleHTML(p) {
+  const st = prog(p);
+  const pid = id(p);
+  const open = pid === OPEN_ID;
+  const g = gradeOf(st.box);
+  const d = daysUntil(st.due);
+  const hasNote = (st.trigger || "").trim() !== "";
+  const toggle = toggleHTML(open,
+    `<span class="row__main">` +
+      `<span class="row__title"><span class="done__tick" aria-hidden="true">✓ </span>${escapeHTML(p.title)}</span>` +
+      `<span class="row__meta">${escapeHTML(CAT_META[p.cat].label)} · graded <b>${g ? g.label : "?"}</b>` +
+        ` · next review in ${d} day${d === 1 ? "" : "s"}` +
+        `<span class="note-flag" data-note-flag${hasNote ? " hidden" : ""}> · no note yet</span></span>` +
+    `</span>`, hasNote ? "Edit note →" : "Add note →");
+  return (
+    `<article class="row done${open ? " is-open" : ""}" data-id="${pid}">` +
+      toggle + (open ? panelHTML(p, st, false) : "") +
+    `</article>`
   );
 }
 
@@ -1027,68 +1123,129 @@ function rowHTML(p, opts) {
  * starts from the entry as it was before today's first grade, exactly as
  * applyGrade() does, so the Fast interval shown is the one you get. */
 function panelHTML(p, st, hideCat) {
+  const pid = id(p);
   const gradedToday = isDoneToday(p);
   const base = regradeBase(st, todayISO());
   const kind = gradeKind(base);
-  const grades = GRADES.map((g) => {
-    const days = INTERVAL[nextBox(base.box, g.box, kind)];
-    const chosen = gradedToday && g.box === Math.min(st.box, 4) ? " is-chosen" : "";
-    return (
-      `<button class="grade ${g.cls}${chosen}" data-grade="${g.box}">` +
-      `${g.label}<small>${g[kind]} · +${days}d</small></button>`
-    );
-  }).join("");
+  const options = GRADES.map((g) => ({
+    g, days: INTERVAL[nextBox(base.box, g.box, kind)],
+    chosen: gradedToday && g.box === Math.min(st.box, 4),
+  }));
 
-  let src = `<p class="history">No local file yet — this is a fresh problem.</p>`;
-  if (p.f && hideCat) src = `<p class="history">📄 file path shows after you grade it</p>`;
-  else if (p.f) src = `<p class="history">📄 <code>${p.f}</code></p>`;
-
-  const hist =
-    st.attempts > 0
-      ? `<p class="history">Attempts: ${st.attempts}${st.last ? ` · last reviewed ${st.last}` : ""}</p>`
-      : "";
-
-  const triggerBlock = (label) => triggerBlockHTML(label, st.trigger);
+  let path = "No local file yet — this is a fresh problem";
+  if (p.f && hideCat) path = "File path appears after you grade it";
+  else if (p.f) path = p.f;
+  if (st.attempts > 0 && !hideCat) path += ` · attempt ${st.attempts}`;
 
   // After grading, the note prompt comes FIRST and the panel stays open — the
   // old flow put it below the grade buttons, which dismissed the panel, so it
   // was unreachable in normal use (56 of 57 problems ended up with no note).
   if (gradedToday) {
-    const g = gradeOf(st.box);
+    const seg = options.map(({ g, days, chosen }) =>
+      `<button data-grade="${g.box}" aria-pressed="${chosen}">${g.label}` +
+      ` <span class="seg__days">+${days}d</span></button>`
+    ).join("");
     return (
-      `<p class="panel__confirm">✓ Graded <strong>${g ? g.label : "?"}</strong>` +
-      ` · next review in ${daysUntil(st.due)} days</p>` +
-      triggerBlock("Before you close this — what tipped you off to the pattern?") +
-      `<button class="close-panel" data-close>done, close it</button>` +
-      `<p class="panel__label panel__regrade">Graded it wrong? Change it</p>` +
-      `<div class="grades">${grades}</div>` +
-      src +
-      hist
+      noteHTML(pid, "What tipped you off to the pattern?", st.trigger, true) +
+      `<div class="regrade">` +
+        `<div class="regrade__pick"><span class="regrade__label">Graded wrong?</span>` +
+        `<div class="seg" role="group" aria-label="Change grade">${seg}</div></div>` +
+        `<span class="done__path">${escapeHTML(path)}</span>` +
+      `</div>`
     );
   }
 
+  const cards = options.map(({ g, days }) =>
+    `<button class="grade" data-grade="${g.box}">` +
+      `<span class="grade__top">${g.label}` +
+      `<span class="grade__days${g.days ? " grade__days--" + g.days : ""}">+${days}d</span></span>` +
+      `<span class="grade__sub">${g[kind]}</span>` +
+    `</button>`
+  ).join("");
+  let note = noteHTML(pid, "Trigger sentence — what tips you off to the pattern?", st.trigger, false);
+  if (hideCat) {
+    note = (st.trigger || "").trim()
+      ? `<span class="file-note">Your note shows after you grade</span>`
+      : "";
+  }
   return (
-    `<p class="panel__label">Grade your attempt (solve it blind first)</p>` +
-    `<div class="grades">${grades}</div>` +
-    (hideCat
-      ? ((st.trigger || "").trim() ? `<p class="history">📝 your note shows after you grade</p>` : "")
-      : triggerBlock("Trigger sentence — what tips you off to the pattern?")) +
-    src +
-    hist
+    `<span class="panel-label">GRADE YOUR ATTEMPT — SOLVE IT BLIND FIRST</span>` +
+    `<div class="grades">${cards}</div>` +
+    note +
+    `<span class="file-note">${escapeHTML(path)}</span>`
   );
 }
 
-/* Shared by the catalog panel and the sprint panel. The note field is the one
+/* Shared by the catalog panels and the sprint panel. The note field is the one
  * piece of the review flow the sprint keeps, because the trigger sentence is
  * what survives past the test. */
-function triggerBlockHTML(label, value) {
+function noteHTML(pid, label, value, withDone) {
+  const fid = "note-" + pid.replace(/[^a-z0-9_-]/gi, "-");
   return (
-    `<div class="trigger">` +
-      `<p class="panel__label">${label}</p>` +
-      `<textarea data-trigger placeholder="e.g. 'sorted array + find a pair → two pointers from both ends'">${escapeHTML(value || "")}</textarea>` +
-      `<p class="trigger__hint">This one sentence is what transfers to new problems. Saved automatically.</p>` +
+    `<div class="note">` +
+      `<label class="note__label" for="${fid}">${label}</label>` +
+      `<textarea class="note__field" id="${fid}" rows="3" data-trigger ` +
+      `placeholder="e.g. sorted array + find a pair → two pointers from both ends">${escapeHTML(value || "")}</textarea>` +
+      `<div class="note__foot">` +
+        `<span class="note__hint">This one sentence is what transfers to new problems. Saved automatically.</span>` +
+        (withDone ? `<button class="btn-ink" data-close>Done</button>` : "") +
+      `</div>` +
     `</div>`
   );
+}
+
+/* ---------- New and All ---------- */
+function groupHTML(cat, aside, key, rows) {
+  return (
+    `<section class="group">` +
+      `<div class="group__head">` +
+        `<div class="group__label">` +
+          `<h2 class="group__name">${escapeHTML(CAT_META[cat].label)}</h2>` +
+          (CORE.has(cat) ? `<span class="core-tag">CORE</span>` : "") +
+          `<span class="group__count">${aside}</span>` +
+        `</div>` +
+        (key ? `<span class="group__key">${key}</span>` : "") +
+      `</div>` +
+      `<ol class="rows">${rows}</ol>` +
+    `</section>`
+  );
+}
+
+/* The queue Today pulls from, in the same order. A problem graded today stays
+ * listed (so its note prompt survives), and it is ordered as though it were
+ * still unstarted, which is where it sat when it was picked. */
+function renderNewList() {
+  const inNew = (p) => !p.s && (prog(p).box === 0 || isDoneToday(p));
+  const catalog = PROBLEMS.map((p) => ({ key: id(p), cat: p.cat, started: !inNew(p), problem: p }));
+  const order = newProblemOrder(catalog).map((x) => x.problem).filter(inFilter);
+  if (!order.length) {
+    listEl.innerHTML = `<p class="empty">${emptyMessage()}</p>`;
+    return;
+  }
+  const groups = new Map();
+  for (const p of order) {
+    if (!groups.has(p.cat)) groups.set(p.cat, []);
+    groups.get(p.cat).push(p);
+  }
+  listEl.innerHTML = [...groups].map(([cat, items]) => {
+    const notStarted = items.filter((p) => prog(p).box === 0).length;
+    return groupHTML(cat, `${notStarted} not started`, "",
+      items.map((p) => listRowHTML(p, false)).join(""));
+  }).join("");
+}
+
+function renderAllList() {
+  const items = PROBLEMS.filter(inFilter);
+  if (!items.length) {
+    listEl.innerHTML = `<p class="empty">${emptyMessage()}</p>`;
+    return;
+  }
+  listEl.innerHTML = CAT_ORDER.filter((c) => items.some((p) => p.cat === c)).map((cat) => {
+    const group = items.filter((p) => p.cat === cat).sort((a, b) => a.n - b.n);
+    const solved = group.filter((p) => p.s).length;
+    return groupHTML(cat, `${solved} of ${group.length} solved`, "BOX ■ = 1 step, 6 max",
+      group.map((p) => listRowHTML(p, true)).join(""));
+  }).join("");
 }
 
 /* ---------- sprint view ----------
@@ -1098,10 +1255,9 @@ function triggerBlockHTML(label, value) {
 function sprintNoteHTML() {
   const done = SPRINT.filter((s) => sprog(s).status === "done").length;
   return (
-    `<div class="window-note sprint-note">` +
-      `<span><strong>${done}</strong> of ${SPRINT.length} covered · ` +
-      `${SPRINT_META.format}</span>` +
-      `<span class="sprint-note__tip">${SPRINT_META.order}</span>` +
+    `<div class="sprint-note">` +
+      `<span>${done} of ${SPRINT.length} covered · ${escapeHTML(SPRINT_META.format)}</span>` +
+      `<span>${escapeHTML(SPRINT_META.order)}</span>` +
     `</div>`
   );
 }
@@ -1126,11 +1282,13 @@ function renderSprintList() {
     const complete = done === items.length ? " is-complete" : "";
 
     return (
-      `<div class="group__head day__head${complete}">` +
-        `<h2>Day ${grp.g} · ${grp.label}</h2>` +
-        `<span class="group__count">${done}/${items.length}</span>` +
-      `</div>` +
-      items.map((s, i) => sprintRowHTML(s, i + 1)).join("")
+      `<section class="group">` +
+        `<div class="group__head day__head${complete}"><div class="group__label">` +
+          `<h2 class="group__name">Day ${grp.g} · ${escapeHTML(grp.label)}</h2>` +
+          `<span class="group__count">${done}/${items.length}</span>` +
+        `</div></div>` +
+        `<ol class="rows">${items.map((s, i) => sprintRowHTML(s, i + 1)).join("")}</ol>` +
+      `</section>`
     );
   }).join("");
 
@@ -1140,60 +1298,54 @@ function renderSprintList() {
 function sprintRowHTML(s, n) {
   const st = sprog(s);
   const key = sid(s);
-  const open = key === OPEN_ID ? " is-open" : "";
+  const open = key === OPEN_ID;
   const twin = s.maps ? PROBLEM_BY_ID[s.maps] : null;
   const status = st.status || "none";
   const hasNote = (st.trigger || "").trim() !== "";
 
   let meta = "";
   if (status === "done") {
-    meta = `<span class="row__meta is-graded${hasNote ? "" : " needs-note"}">` +
-           `done${hasNote ? "" : " · no note yet"}</span>`;
-  } else if (status === "stuck") {
-    meta = '<span class="row__meta is-overdue">stuck</span>';
-  } else if (status === "skipped") {
-    meta = '<span class="row__meta">skipped</span>';
+    meta = `done<span class="note-flag" data-note-flag${hasNote ? " hidden" : ""}> · no note yet</span>`;
+  } else if (status === "stuck" || status === "skipped") {
+    meta = status;
   } else if (twin && twin.s) {
-    meta = '<span class="row__meta is-due">already solved</span>';
+    meta = "already solved";
   }
 
-  const setTag = s.set ? `<span class="set-tag">set ${s.set}</span> ` : "";
-
+  const setTag = s.set ? `<span class="set-tag">set ${escapeHTML(s.set)}</span> ` : "";
+  const toggle = toggleHTML(open,
+    `<span class="row__num">${n}</span>` +
+    `<span class="prio prio--${s.pri}">${s.pri}</span>` +
+    `<span class="row__title">${setTag}${escapeHTML(s.title)}</span>` +
+    `<span class="row__status">${meta}</span>`);
   return (
-    `<div class="row row--sprint st-${status}${open}" data-id="${key}">` +
-      `<div class="row__top">` +
-        `<span class="row__box"></span>` +
-        `<span class="row__num">${n}</span>` +
-        `<span class="prio prio--${s.pri}">${s.pri}</span>` +
-        `<span class="row__title">${setTag}${s.title}</span>` +
-        `${meta}` +
-      `</div>` +
-      `<div class="row__panel">${sprintPanelHTML(s, st)}</div>` +
-    `</div>`
+    `<li class="row row--list st-${status}${open ? " is-open" : ""}" data-id="${key}">` +
+      (open ? `<div class="row__head">${toggle}</div>${sprintPanelHTML(s, st)}` : toggle) +
+    `</li>`
   );
 }
 
 function sprintPanelHTML(s, st) {
   const buttons = SPRINT_STATUS.map(
     (g) =>
-      `<button class="grade ${g.cls}${st.status === g.key ? " is-chosen" : ""}" ` +
-      `data-status="${g.key}">${g.label}<small>${g.sub}</small></button>`
+      `<button class="grade" data-status="${g.key}" aria-pressed="${st.status === g.key}">` +
+      `<span class="grade__top">${g.label}</span><span class="grade__sub">${g.sub}</span></button>`
   ).join("");
 
   const twin = s.maps ? PROBLEM_BY_ID[s.maps] : null;
   let twinLine = "";
   if (twin && twin.s) {
-    twinLine = `<p class="history">✓ already in the tracker · <code>${twin.f}</code></p>`;
+    twinLine = `<span class="file-note">Already in the tracker · ${escapeHTML(twin.f)}</span>`;
   } else if (twin) {
-    twinLine = `<p class="history">in the AlgoMap catalog under ${CAT_META[twin.cat].label}, not solved yet</p>`;
+    twinLine = `<span class="file-note">In the AlgoMap catalog under ${CAT_META[twin.cat].label}, not solved yet</span>`;
   }
 
   return (
-    `<p class="panel__label">Mark it — no box, no due date, nothing enters your review queue</p>` +
+    `<span class="panel-label">MARK IT — NO BOX, NO DUE DATE, NOTHING ENTERS YOUR REVIEW QUEUE</span>` +
     `<div class="grades">${buttons}</div>` +
-    triggerBlockHTML("Trigger sentence — what tips you off to the pattern?", st.trigger) +
-    `<p class="history">🔗 <a href="${s.url}" target="_blank" rel="noopener">open on LeetCode</a></p>` +
-    `<p class="history">📄 put your solution in <code>${sprintFilePath(s)}</code></p>` +
+    noteHTML(sid(s), "Trigger sentence — what tips you off to the pattern?", st.trigger, false) +
+    `<a class="lc-link" href="${s.url}" target="_blank" rel="noopener">Open on LeetCode ↗</a>` +
+    `<span class="file-note">Put your solution in ${escapeHTML(sprintFilePath(s))}</span>` +
     twinLine
   );
 }
@@ -1218,66 +1370,65 @@ function escapeHTML(s) {
 }
 
 const SPRINT_EMPTY_HTML = `
-<div class="help">
+<section class="card">
   <h2>No sprint loaded</h2>
-  <p>This tab holds a <strong>one-off problem list</strong> that comes with a specific interview — a take-home plan, a screen's prep sheet, a recruiter's topic list. It is a checklist with memory: mark each problem <strong>Done</strong>, <strong>Stuck</strong>, or <strong>Skipped</strong>, and write the trigger sentence. Nothing here gets a box or a due date, so it never touches <strong>Due today</strong>.</p>
+  <p>This tab holds a <b>one-off problem list</b> that comes with a specific interview — a take-home plan, a screen's prep sheet, a recruiter's topic list. It is a checklist with memory: mark each problem <b>Done</b>, <b>Stuck</b>, or <b>Skipped</b>, and write the trigger sentence. Nothing here gets a box or a due date, so it never touches <b>Today</b>.</p>
   <h3>To load the next one</h3>
   <ul>
     <li>Open <code>apps/prep-tracker/sprint.js</code> — the header documents all three constants.</li>
     <li>Fill in <code>SPRINT_META</code> (the test's shape), <code>SPRINT_GROUPS</code> (the day chunks), and <code>SPRINT</code> (the problems).</li>
-    <li>Tag each problem <span style="color:#4fe0c0">essential</span>, <span style="color:#6c9cff">stretch</span>, or <span style="color:#3a4654">optional</span>. A list that does not fit is normal — the tag is what you cut.</li>
+    <li>Tag each problem <span class="prio prio--essential">essential</span>, <span class="prio prio--stretch">stretch</span>, or <span class="prio prio--optional">optional</span>. A list that does not fit is normal — the tag is what you cut.</li>
     <li>Reload. The tab wakes up.</li>
   </ul>
   <h3>The last one</h3>
-  <p>The 2026-08 assessment ran 39 problems across 9 days. All 39 were merged into the main catalog on 2026-08-21, so they are in the normal rotation now — look for them in <strong>All</strong>, including the new <strong>Greedy &amp; Intervals</strong> and <strong>Sorting</strong> categories.</p>
-</div>`;
+  <p>The 2026-08 assessment ran 39 problems across 9 days. All 39 were merged into the main catalog on 2026-08-21, so they are in the normal rotation now — look for them in <b>All</b>, including the <b>Greedy &amp; Intervals</b> and <b>Sorting</b> categories.</p>
+</section>`;
+
+const HELP_INTRO_HTML = `
+<div class="eyebrow">Active recall · Spaced repetition</div>
+<h1 class="intro__title">How this tracker works</h1>
+<p class="intro__lead">Two evidence-backed techniques run this: <b>active recall</b> — solve blind, the struggle is the learning — and <b>spaced repetition</b> — revisit each problem at growing intervals, right before you’d forget it.</p>
+<p class="intro__note">The full rules (rep types, grading, boxes, the order of new problems) live in <code>PRACTICE.md</code> at the repo root. This page is the short version.</p>`;
 
 const HELP_HTML = `
-<div class="help">
-  <h2>How this tracker works</h2>
-  <p>Two evidence-backed techniques run this: <strong>active recall</strong> (solve blind — struggling is the learning) and <strong>spaced repetition</strong> (revisit each problem at growing intervals, right before you'd forget it).</p>
+<section class="block">
+  <h2 class="block__title">The Today page</h2>
+  <ol class="steps">
+    <li class="steps__item"><span class="steps__num">01</span><div class="steps__text"><span class="steps__title">Quick rep</span><span class="steps__body">Run <code>/quick-rep</code> in Claude Code (10 min). It ticks itself when a quick-rep grade lands today. On a rough day, this alone is a win.</span></div></li>
+    <li class="steps__item"><span class="steps__num">02</span><div class="steps__text"><span class="steps__title">Reps</span><span class="steps__body">Up to 3 problems from the schedule. Solve each <i>blind</i>, then click it and grade honestly. The category stays hidden until you grade — spotting the pattern is part of the rep. The list shrinks as you grade and does not refill; <b>show all</b> has more if you want them.</span></div></li>
+    <li class="steps__item"><span class="steps__num">03</span><div class="steps__text"><span class="steps__title">New problem</span><span class="steps__body">The next one in PRACTICE.md order. Target 2 a week; a 3rd is a stretch, then the week is done.</span></div></li>
+    <li class="steps__item steps__item--note"><span class="steps__num">✎</span><div class="steps__text"><span class="steps__title">The trigger sentence</span><span class="steps__body">After each grade, write the cue that unlocked the pattern. That’s the part that transfers to new problems.</span></div></li>
+  </ol>
+  <p class="aside">The stat strip shows the week (Monday to Sunday), not the backlog: new problems started and reps graded. <b>Show all</b> on Today still lists the whole backlog.</p>
+</section>
 
-  <p>The rules (rep types, how to grade, boxes, the order of new problems) live in <code>PRACTICE.md</code> at the repo root. This page is the short version.</p>
+<section class="block">
+  <h2 class="block__title">The Leitner boxes</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th scope="col">GRADE</th><th scope="col">BOX</th><th scope="col">NEXT REVIEW</th></tr></thead>
+      <tbody>
+        <tr><td>Failed</td><td class="mono">1</td><td class="td-late">tomorrow</td></tr>
+        <tr><td>Slow / hints</td><td class="mono">2</td><td>3 days</td></tr>
+        <tr><td>Clean</td><td class="mono">3</td><td>1 week</td></tr>
+        <tr><td>Fast</td><td class="mono">4</td><td>3 weeks</td></tr>
+        <tr><td>Fast again from box 4</td><td class="mono">5</td><td class="td-good">45 days</td></tr>
+        <tr><td>Fast again from box 5</td><td class="mono">6</td><td class="td-good">120 days</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="aside">You never pick box 5 or 6: Fast climbs one box at a time from box 4, and any other grade sets that grade's box. A quick rep can hold box 6 but never earn it.</p>
+</section>
 
-  <h3>The Today card</h3>
-  <ul>
-    <li><strong>1. Quick rep.</strong> Run <code>/quick-rep</code> in Claude Code (10 min). It ticks itself when a quick-rep grade lands today. On a rough day this alone is a win.</li>
-    <li><strong>2. Reps.</strong> Up to 3 problems from the schedule. Solve each <em>blind</em>, then click it and <strong>grade honestly</strong>. The category stays hidden until you grade: spotting the pattern is part of the rep. The window shrinks as you grade and does not refill; at 0 it says <em>Reps done for today</em>, and <strong>Show all</strong> has more if you want them.</li>
-    <li><strong>3. New problem.</strong> The next one in the PRACTICE.md order. Target 2 a week, a 3rd is a stretch, then the week is done.</li>
-    <li>Write the <strong>trigger sentence</strong> after each grade — the cue that unlocks the pattern. That's the part that transfers.</li>
-  </ul>
-  <p>The stat strip shows the week (Monday to Sunday), not the backlog: new problems started and reps graded. <strong>Show all</strong> in the Due tab still lists the whole backlog.</p>
+<section class="block">
+  <h2 class="block__title">Quick-rep grades from the terminal</h2>
+  <p class="prose"><code>python3 apps/prep-tracker/grade.py &lt;key&gt; pass|fail [--date YYYY-MM-DD]</code> records a quick-rep result, for example <code>grade.py two_pointers#3 pass</code>. It writes through the running server when there is one, else straight to the file. This tab picks the change up when you come back to it.</p>
+</section>
 
-  <h3>The Leitner boxes</h3>
-  <table>
-    <tr><th>Grade</th><th>Box</th><th>Next review</th></tr>
-    <tr><td><span class="dot" style="background:#f4726a"></span>Failed</td><td>1</td><td>tomorrow</td></tr>
-    <tr><td><span class="dot" style="background:#f4b942"></span>Slow / hints</td><td>2</td><td>3 days</td></tr>
-    <tr><td><span class="dot" style="background:#4fe0c0"></span>Clean</td><td>3</td><td>1 week</td></tr>
-    <tr><td><span class="dot" style="background:#6c9cff"></span>Fast</td><td>4</td><td>3 weeks</td></tr>
-    <tr><td><span class="dot" style="background:#b48cff"></span>Fast again from box 4</td><td>5</td><td>45 days</td></tr>
-    <tr><td><span class="dot" style="background:#e8d48a"></span>Fast again from box 5</td><td>6</td><td>120 days</td></tr>
-  </table>
-  <p>You never pick box 5 or 6: Fast climbs one box at a time from box 4, and any other grade sets that grade's box. A quick rep can hold box 6 but never earn it.</p>
-
-  <h3>Quick-rep grades from the terminal</h3>
-  <p><code>python3 apps/prep-tracker/grade.py &lt;key&gt; pass|fail [--date YYYY-MM-DD]</code> records a quick-rep result, for example <code>grade.py two_pointers#3 pass</code>. It writes through the running server when there is one, else straight to the file. This tab picks the change up when you come back to it.</p>
-
-  <h3>The mix</h3>
-  <p>Your solved problems (📄 = a file already exists in this repo) were seeded into rotation and staggered so only ~3 come due per day — that's your <strong>retention</strong> work. Drip in a new problem whenever you have appetite — that's your <strong>growth</strong>. Weak buckets (red/amber) always sort to the top so you face them first.</p>
-
-  <h3>The Sprint tab</h3>
-  <p>A separate track for a specific interview: the 39-problem plan that came with the assessment invite, grouped into 9 days. It is a <strong>checklist with memory</strong>, not a second scheduler — no boxes, no due dates, no calendar, and nothing there ever appears in <strong>Due today</strong>. The day numbers are labels for chunks of the list, so falling a day behind costs you nothing.</p>
-  <ul>
-    <li>Mark each one <strong>Done</strong>, <strong>Stuck</strong>, or <strong>Skipped</strong>. Click the active one again to clear it.</li>
-    <li>The trigger sentence works exactly as it does here, and it survives the merge.</li>
-    <li><span style="color:#4fe0c0">essential</span> = do it · <span style="color:#6c9cff">stretch</span> = if the day runs short · <span style="color:#3a4654">optional</span> = reference only. Skipping an optional is the plan working, not a failure.</li>
-    <li><strong>Reset all</strong> does not touch the sprint.</li>
-  </ul>
-  <p>After the test, the keepers get folded into the main catalog and join this rotation. See <em>Merging the sprint back in</em> in the README.</p>
-
-  <p style="color:#7f8c9b">Retention here stays at ~30–60 min/day. The sprint is the thing with a clock on it.</p>
-</div>`;
+<section class="block">
+  <h2 class="block__title">The Sprint tab</h2>
+  <p class="prose">A separate track for a specific interview: a problem list grouped into days. It is a <b>checklist with memory</b>, not a second scheduler — no boxes, no due dates, and nothing there ever appears on <b>Today</b>. Mark each one <b>Done</b>, <b>Stuck</b>, or <b>Skipped</b>; click the active one again to clear it. <b>Reset all</b> does not touch the sprint.</p>
+</section>`;
 
 /* ---------- events ---------- */
 document.getElementById("tabs").addEventListener("click", (e) => {
@@ -1301,50 +1452,38 @@ listEl.addEventListener("click", (e) => {
   if (e.target.id === "haltReload") { location.reload(); return; }
   if (e.target.id === "haltMerge") { resolveLocalAhead("merge"); return; }
   if (e.target.id === "haltDiscard") { resolveLocalAhead("discard"); return; }
-  // window size toggle?
   if (e.target.id === "windowToggle") {
     SHOW_ALL = !SHOW_ALL;
     render();
     return;
   }
-  // "done, close it"? Must run before the row toggle below, or the row would
-  // just reopen on the same click.
   if (e.target.closest("[data-close]")) {
     OPEN_ID = null;
     render();
     return;
   }
-  // sprint status button? Checked before .grade — sprint buttons reuse the
-  // .grade class for styling but carry data-status instead of data-grade.
+  // Sprint status buttons share the grade-card look but carry data-status.
   const sb = e.target.closest("[data-status]");
   if (sb) {
-    setSprintStatus(sb.closest(".row").dataset.id, sb.dataset.status);
-    e.stopPropagation();
+    setSprintStatus(sb.closest("[data-id]").dataset.id, sb.dataset.status);
     return;
   }
-  // grade button?
-  const g = e.target.closest(".grade");
+  const g = e.target.closest("[data-grade]");
   if (g) {
-    const row = g.closest(".row");
-    gradeProblem(row.dataset.id, Number(g.dataset.grade));
-    e.stopPropagation();
+    gradeProblem(g.closest("[data-id]").dataset.id, Number(g.dataset.grade));
     return;
   }
-  // A link inside a panel (the LeetCode button) must not collapse the row out
-  // from under the click.
-  if (e.target.closest("a")) return;
-  // toggle open?
-  const row = e.target.closest(".row");
-  if (!row) return;
-  if (e.target.closest(".trigger")) return; // don't toggle when interacting with textarea
-  OPEN_ID = OPEN_ID === row.dataset.id ? null : row.dataset.id;
+  const toggle = e.target.closest("[data-toggle]");
+  if (!toggle) return;
+  const pid = toggle.closest("[data-id]").dataset.id;
+  OPEN_ID = OPEN_ID === pid ? null : pid;
   render();
 });
 
 listEl.addEventListener("input", (e) => {
   const ta = e.target.closest("[data-trigger]");
   if (!ta) return;
-  const row = ta.closest(".row");
+  const row = ta.closest("[data-id]");
   const pid = row.dataset.id;
   STATE[pid] = STATE[pid] || { box: 0, due: null, last: null, attempts: 0, trigger: "" };
   STATE[pid].trigger = ta.value;
@@ -1352,14 +1491,9 @@ listEl.addEventListener("input", (e) => {
 
   // Keep the row's "no note yet" warning honest as you type. A full render()
   // here would destroy the textarea and drop the cursor mid-sentence, so patch
-  // the one element instead. Both row kinds end their meta the same way.
-  const meta = row.querySelector(".row__meta.is-graded");
-  if (meta) {
-    const hasNote = ta.value.trim() !== "";
-    meta.classList.toggle("needs-note", !hasNote);
-    meta.textContent = meta.textContent.replace(/ · no note yet$/, "");
-    if (!hasNote) meta.textContent += " · no note yet";
-  }
+  // the one element instead.
+  const flag = row.querySelector("[data-note-flag]");
+  if (flag) flag.hidden = ta.value.trim() !== "";
 });
 
 function gradeProblem(pid, grade) {
@@ -1412,8 +1546,7 @@ function setFootNote(ok, kind) {
       "⚠ Offline mode (localStorage only). Run server.py to make the repo the source of truth.";
   } else if (ok) {
     note.className = "foot__note";
-    note.textContent =
-      "✓ Saving to apps/prep-tracker/progress.json — commit it to sync across machines.";
+    note.textContent = "Saved to progress.json — commit to sync";
   } else {
     note.className = "foot__note is-error";
     note.textContent =

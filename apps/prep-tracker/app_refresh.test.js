@@ -123,10 +123,9 @@ test("a successful save clears the unsaved state", async () => {
   assert.strictEqual(server.data["stacks#1"].attempts, 3);
 });
 
-/* Plan rev 6. The rows shown in the window are everything before step 3,
- * which holds the new-problem row. */
+// The rep rows in today's window; the new-problem card is not one of them.
 const windowRows = (app) =>
-  (app.run('listEl.innerHTML.split("today__step--new")[0]').match(/class="row /g) || []).length;
+  (app.run("listEl.innerHTML").match(/class="row row--rep/g) || []).length;
 
 test("the window shrinks as reps are graded, and the badge equals the rows shown", async () => {
   const server = fakeServer(seed());
@@ -138,7 +137,7 @@ test("the window shrinks as reps are graded, and the badge equals the rows shown
     if (left) app.run("gradeProblem(todayWindow()[0].key, 3)");
   }
   assert.match(app.run("listEl.innerHTML"), /Reps done for today/);
-  assert.match(app.run("listEl.innerHTML"), /id="windowToggle">Show all/);
+  assert.match(app.run("listEl.innerHTML"), /id="windowToggle">show all/);
   assert.doesNotMatch(app.run("listEl.innerHTML"), /Nothing due today/);
 });
 
@@ -156,7 +155,7 @@ test("a Fast re-grade after a grade.py quick rep gives box 5, before and after a
   assert.deepStrictEqual([first.box, first.attempts, first.prev], [5, 3, prev]);
 
   const reloaded = await loadApp(server);
-  assert.match(reloaded.run('panelHTML(PROBLEMS.find((p) => id(p) === "stacks#2"), STATE["stacks#2"], false)'), /Fast<small>[^<]*\+45d/);
+  assert.match(reloaded.run('panelHTML(PROBLEMS.find((p) => id(p) === "stacks#2"), STATE["stacks#2"], false)'), /data-grade="4"[^>]*>Fast[^+]*\+45d/);
   reloaded.run('gradeProblem("stacks#2", 4)');
   await settle();
   assert.deepStrictEqual(server.data["stacks#2"], first, "a reload changes nothing");
