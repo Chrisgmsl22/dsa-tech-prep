@@ -152,7 +152,7 @@ def test_apply_unknown_key_is_exit_code_2():
     assert e.value.code == 2
 
 
-# ---------- prev: same cases as selection.test.js (plan rev 6) ----------
+# ---------- prev: same cases as selection.test.js ----------
 
 def test_first_grade_of_the_day_stores_prev():
     _, got = grade.apply_grade({"k#1": dict(LEGACY)}, "k#1", "pass", TODAY)

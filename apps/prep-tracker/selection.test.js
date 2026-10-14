@@ -296,7 +296,41 @@ test("pickNewProblem: returns null when everything is started", () => {
   assert.strictEqual(S.pickNewProblem(catalogOf({ stacks: [2, 2], dp: [1, 1] })), null);
 });
 
-// ---- grade kind and started (plan rev 3: "new" means box 0) ----
+test("newProblemOrder: lists every unstarted problem once, in pickNewProblem order, dp last", () => {
+  const catalog = catalogOf({
+    arrays_and_strings: [1, 3], hashmaps_and_sets: [1, 2], graphs: [1, 3], greedy: [0, 2], dp: [1, 2],
+  });
+  const before = JSON.stringify(catalog);
+  const keys = S.newProblemOrder(catalog).map((p) => p.key);
+  assert.strictEqual(JSON.stringify(catalog), before, "the input is not mutated");
+  assert.deepStrictEqual(keys, [
+    "greedy#1",              // untouched category first
+    "arrays_and_strings#2",  // 5 started, odd: arrays 1/3 is thinner than hashmaps 1/2
+    "graphs#2",              // even: roadmap
+    "hashmaps_and_sets#2",   // odd: hashmaps 1/2 is thinner than arrays 2/3
+    "graphs#3",
+    "arrays_and_strings#3",
+    "greedy#2",              // even, graphs full: fall back by tier
+    "dp#2",                  // dp only when nothing else is left
+  ]);
+  assert.strictEqual(S.pickNewProblem(catalog).key, keys[0], "the head is today's pick");
+});
+
+test("newProblemOrder: empty when everything is started", () => {
+  assert.deepStrictEqual(S.newProblemOrder(catalogOf({ stacks: [2, 2] })), []);
+});
+
+test("todayHeadline: sums up the reps left and step 3", () => {
+  assert.strictEqual(S.todayHeadline(2, "todo"), "Two reps left, one new problem.");
+  assert.strictEqual(S.todayHeadline(1, "todo"), "One rep left, one new problem.");
+  assert.strictEqual(S.todayHeadline(0, "todo"), "Reps done, one new problem.");
+  assert.strictEqual(S.todayHeadline(3, "stretch"), "Three reps left, one stretch problem.");
+  assert.strictEqual(S.todayHeadline(0, "done"), "Reps done. Week done.");
+  assert.strictEqual(S.todayHeadline(2, "none"), "Two reps left. Every problem started.");
+  assert.strictEqual(S.todayHeadline(12, "todo"), "12 reps left, one new problem.");
+});
+
+// ---- grade kind and started ("new" means box 0) ----
 
 const DAY = "2026-10-12";
 const dueFor = (box) => `+${box}`;
@@ -345,7 +379,7 @@ test("weeklyCounts: a grade.py quick rep (no started) counts as a rep", () => {
   assert.deepStrictEqual(S.weeklyCounts([quick], "2026-10-12", "2026-10-18"), { newCount: 0, reps: 1 });
 });
 
-// ---- re-grade from a stored prev (plan rev 6, criterion 14) ----
+// ---- re-grade from a stored prev ----
 
 const withoutPrev = ({ prev, ...rest }) => rest;
 
@@ -403,7 +437,7 @@ test("regradeBase: a new problem re-graded the same day stays new and keeps star
   );
 });
 
-/* The bug that opened rev 6: grade.py pass on box 4 lands on 5 with prev box 4.
+/* grade.py pass on box 4 lands on 5 with prev box 4.
  * A Fast re-grade in the app must give 5 (+45d), not 6 (+120d), and a reload
  * (a JSON round trip of the file) must not change that. */
 test("applyGrade: a Fast re-grade after a grade.py quick rep gives box 5, also after a reload", () => {
@@ -432,7 +466,7 @@ test("mondayOf: steps back to Monday, across month, year and leap day", () => {
   assert.strictEqual(S.mondayOf("2200-03-01", 6), "2200-02-24");  // 100-year rule: not leap
 });
 
-// ---- the window does not refill (plan rev 6, criterion 13) ----
+// ---- the window does not refill ----
 
 const rep = { last: DAY, kind: "full" };
 const newOne = { last: DAY, kind: "new", started: DAY };

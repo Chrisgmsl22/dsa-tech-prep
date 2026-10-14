@@ -35,10 +35,9 @@ function gradeKind(entry) {
   return (entry.box || 0) === 0 ? "new" : "full";
 }
 
-/* An app grade of the current entry. `dueFor(box)` returns the due date, so
- * this file stays free of Date. Only a grade from box 0 dates `started`;
- * grade.py never does. The first grade of a day stores `prev`; a re-grade
- * keeps it, so every grade that day starts from the same place. */
+/* An app grade. `dueFor(box)` returns the due date, so this file stays free
+ * of Date. Only a grade from box 0 dates `started`. The day's first grade
+ * stores `prev` and a re-grade keeps it, so every grade that day starts there. */
 function applyGrade(cur, grade, today, dueFor) {
   const base = regradeBase(cur, today);
   const kind = gradeKind(base);
@@ -61,11 +60,9 @@ function prevOf(entry) {
   return prev;
 }
 
-/* A re-grade ("graded it wrong?") must start from the entry as it was before
- * today's first grade, or a second Fast click climbs twice. `prev` lives in
- * the entry, so this holds after a reload and after a grade.py write. Without
- * one (graded today before `prev` existed) the current entry is the best base.
- * grade.py's regrade_base() is the twin. */
+/* A re-grade starts from the entry before today's first grade, or a second
+ * Fast click climbs twice. `prev` is stored, so this survives a reload and a
+ * grade.py write. grade.py's regrade_base() is the twin. */
 function regradeBase(cur, today) {
   if (cur.last !== today || !cur.prev) return cur;
   const base = { ...cur };
@@ -262,11 +259,38 @@ function pickNewProblem(catalog) {
   return fallback ? firstIn(fallback) : firstIn(LAST_CATEGORY);
 }
 
+/* Every unstarted problem in the order pickNewProblem() would hand them out,
+ * so the New tab reads as the queue Today pulls from. */
+function newProblemOrder(catalog) {
+  const rest = catalog.map((p) => ({ ...p }));
+  const order = [];
+  for (let pick = pickNewProblem(rest); pick; pick = pickNewProblem(rest)) {
+    pick.started = true;
+    order.push(catalog[rest.indexOf(pick)]);
+  }
+  return order;
+}
+
+const NUMBER_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
+
+/* The Today h1. `newStep` is the state of step 3: "todo", "stretch", "done"
+ * (the week's new problems are in) or "none" (nothing left to start). */
+function todayHeadline(repsLeftToday, newStep) {
+  const n = NUMBER_WORDS[repsLeftToday] || String(repsLeftToday);
+  const reps = repsLeftToday > 0
+    ? `${n} rep${repsLeftToday === 1 ? "" : "s"} left`
+    : "Reps done";
+  if (newStep === "todo") return `${reps}, one new problem.`;
+  if (newStep === "stretch") return `${reps}, one stretch problem.`;
+  if (newStep === "done") return `${reps}. Week done.`;
+  return `${reps}. Every problem started.`;
+}
+
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     TIERS, TIER_SHARE, WINDOW_SIZE, INTERVAL, ROADMAP_CATEGORY, LAST_CATEGORY,
     largestRemainder, tierOf, isUrgent, comparePriority, selectWindow,
     nextBox, gradeKind, applyGrade, PREV_FIELDS, prevOf, regradeBase, mondayOf, repsLeft,
-    repWindow, weeklyCounts, pickNewProblem,
+    repWindow, weeklyCounts, pickNewProblem, newProblemOrder, todayHeadline,
   };
 }
