@@ -653,6 +653,7 @@ function renderHalt() {
   statsEl.innerHTML = "";
   dueBadge.textContent = "0";
   sprintBadge.textContent = "0";
+  sprintBadge.hidden = true;
 
   if (LOCAL_AHEAD) {
     const n = LOCAL_AHEAD.keys.length;
@@ -779,6 +780,7 @@ function renderStats() {
 
   dueBadge.textContent = todayWindow().length;
   sprintBadge.textContent = sprintDone;
+  sprintBadge.hidden = sprintDone === 0;
 
   if (VIEW === "help") {
     statsEl.innerHTML = "";
@@ -1086,15 +1088,16 @@ function listRowHTML(p, meter) {
     status = `<span class="row__status is-graded">graded ${g ? g.label : "?"}</span>`;
   }
   else if (st.box === 0) status = `<span class="row__status">new</span>`;
-  else status = `<span class="row__status">${dueText(st)}</span>`;
+  else status = `<span class="row__status is-scheduled">${dueText(st)}</span>`;
 
   const toggle = toggleHTML(open,
     `<span class="row__num">${p.n}</span>` +
     `<span class="row__title">${escapeHTML(p.title)}</span>` +
     (meter ? meterHTML(st.box) : "") + status);
-  if (!open) return `<li class="row row--list" data-id="${pid}">${toggle}</li>`;
+  const cls = meter ? "row row--list" : "row row--list row--new";
+  if (!open) return `<li class="${cls}" data-id="${pid}">${toggle}</li>`;
   return (
-    `<li class="row row--list is-open" data-id="${pid}">` +
+    `<li class="${cls} is-open" data-id="${pid}">` +
       `<div class="row__head">${toggle}${leetcodeLinkHTML(p)}</div>` +
       panelHTML(p, st, false) +
     `</li>`

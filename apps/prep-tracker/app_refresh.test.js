@@ -185,3 +185,14 @@ test("correcting today's quick rep from box 5 keeps it quick: box 5, no rep slot
   assert.match(app.run("listEl.innerHTML"), /class="quick is-done"/, "step 1 stays ticked");
 });
 
+
+test("an empty sprint hides its badge; New rows and scheduled All statuses get their classes", async () => {
+  const app = await loadApp(fakeServer(seed()));
+  app.run("render()");
+  assert.strictEqual(app.run("SPRINT.length"), 0);
+  assert.strictEqual(app.run("sprintBadge.hidden"), true);
+  const row = (meter) => app.run(`listRowHTML(PROBLEMS.find((p) => id(p) === "stacks#1"), ${meter})`);
+  assert.match(row(false), /class="row row--list row--new"/);
+  assert.match(row(true), /class="row row--list"/);
+  assert.match(row(true), /class="row__status is-scheduled"/);
+});
