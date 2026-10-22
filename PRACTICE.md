@@ -21,7 +21,7 @@ rep types, the boxes, and the order of new problems. `CLAUDE.md` points here. Th
 - **Daily rule:** if there are 45 minutes and fewer than 2 new problems this week → do a new
   problem. Otherwise → reps.
 - **Day levels:**
-  - Floor (5 min): 1 `/quick-rep`. On a rough day this is a win. The streak survives.
+  - Floor (10 min): 1 `/quick-rep`. On a rough day this is a win. The streak survives.
   - Standard (45 min): reps, or 1 new problem, plus the evening block.
   - Full (about 85 min): the whole budget. Do not plan above it.
 
@@ -29,9 +29,39 @@ rep types, the boxes, and the order of new problems. `CLAUDE.md` points here. Th
 
 | Type | Time | Used for | How |
 |---|---|---|---|
-| Quick rep | 5 min | Box 4 and up, and the triage set | `/quick-rep` session. Plan in plain words, no code |
-| Full rep | 25 min cap | Box 1 to 3, and every other rep of a box 4+ problem | Blind code in `reps/YYYY-MM-DD_slug.py`, then LeetCode |
-| New problem | 60 min cap | Unstarted problems | Time-box protocol in `CLAUDE.md` |
+| Quick rep | 10 min, hard stop | Box 4 and up, and the triage set | `/quick-rep` session. Plan in plain words, no code |
+| Full rep | 35 min, hard stop | Box 1 to 3, and every other rep of a box 4+ problem | Blind code in `reps/YYYY-MM-DD_slug.py`, then LeetCode |
+| New problem | 60 min, hard stop | Unstarted problems | Time-box protocol in `CLAUDE.md` |
+
+## How to grade
+
+Check from the top. The first row that matches is the grade. Use the clock, not the feeling.
+
+**Full rep**
+
+| Grade | Check |
+|---|---|
+| Failed | No accepted solution at 35 min, or you looked at the solution or the old file |
+| Slow | Accepted, but you needed a hint, or it took 26 to 35 min, or 3 or more wrong submits |
+| Clean | Accepted with no hint, 16 to 25 min, at most 2 wrong submits |
+| Fast | Accepted with no hint, 15 min or less, at most 1 wrong submit |
+
+**New problem**
+
+| Grade | Check |
+|---|---|
+| Failed | You read the solution, or you hit 60 min |
+| Slow | Accepted, but you needed the pattern-name hint, or it took more than 40 min |
+| Clean | Accepted with no hint, 21 to 40 min |
+| Fast | Accepted with no hint, 20 min or less |
+
+- **A hint** is anything outside your head: the mentor, the `trigger` note, an old file, a video,
+  an AI autocomplete. A pattern name counts.
+- **A wrong submit** is a LeetCode submit that fails. A failed "Run" on the sample does not count.
+- **Grade up honestly.** If the clock says 12 minutes and the code passed, click Fast, not Clean.
+  Problems must climb to box 4 and higher, or the queue fills again.
+- **You never pick box 5 or 6.** Fast on a box 4 problem moves it to box 5. Fast on box 5 moves it to
+  box 6. Any other grade sets the box in the table above, so a miss drops the problem down.
 
 **Quick rep rules**
 
@@ -44,9 +74,11 @@ rep types, the boxes, and the order of new problems. `CLAUDE.md` points here. Th
   approach that differs from the file still passes.
 - **Alternate.** A problem never gets 2 quick reps in a row. A coded rep sits between them.
 - Box 6 needs a clean coded rep. A quick rep can never promote a problem to box 6.
+- A same-day correction of a quick rep in the tracker stays a quick rep, so it also stops at box 5.
 
-**Quick rep → tracker grade.** The student clicks the grade in the tracker. The skill only says
-which one.
+**Quick rep → tracker grade.** The `/quick-rep` skill records the grade with
+`apps/prep-tracker/grade.py <key> pass|fail`. The tracker tab picks it up when you return to it,
+and step 01 of the Today page ticks.
 
 | Set | PASS | FAIL |
 |---|---|---|
@@ -66,10 +98,8 @@ left. This turns 23 unknowns into real boxes.
 | 2 | Slow | Solved slow or with hints | 3 days |
 | 3 | Clean | Solved with no help | 7 days |
 | 4 | Fast | Fast and confident | 21 days |
-| 5 | Fast on box 4 | Planned, not built yet | 45 days |
-| 6 | Fast on box 5 (coded) | Planned, not built yet | 120 days |
-
-Until the tracker supports boxes 5 and 6, Fast means box 4.
+| 5 | Fast on box 4 | Known well | 45 days |
+| 6 | Fast on box 5 (coded) | Known for a long time | 120 days |
 
 ## Order of new problems
 
@@ -86,8 +116,8 @@ Until the tracker supports boxes 5 and 6, Fast means box 4.
 - `quick-reps/YYYY-MM-DD_slug.md`: one file per quick rep, written by `/quick-rep`.
 - `.claude/skills/quick-rep/SKILL.md`: the interviewer script.
 
-## Planned tracker changes (not built)
+## The tracker
 
-- Boxes 5 and 6, with Fast as a climb.
-- A weekly line ("new this week: 1/2, reps: 4") in place of the total due count.
-- Hide the category of a problem until it is graded.
+Built 2026-10-13 to match this file: boxes 1 to 6, the Today page (01 quick rep, 02 reps, 03 new
+problem), the weekly line in place of the due count, hidden categories in rep rows, and `grade.py`.
+How to run it and how each view works: `apps/prep-tracker/README.md`.

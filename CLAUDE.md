@@ -375,8 +375,9 @@ refills and the growth slot disappears.
 binary search, linked lists, graphs), tier 3 (heaps, backtracking, DP, greedy, sorting) — at
 roughly 50/35/15, so a 3-wide window lands at 2/1/0. Tier 3 surfaces via the urgency bypass or
 the backfill pass rather than a standing quota. Anything in box 1 or more than 30 days
-overdue jumps the window regardless of tier. The window auto-refills as problems are
-graded; `Show all` reveals the true backlog. It is a display filter only and never
+overdue jumps the window regardless of tier. Since 2026-10-13 the window does **not** refill:
+it shrinks as reps are graded and then reads "Reps done for today"; `Show all` reveals the true
+backlog. It is a display filter only and never
 rewrites due dates.
 
 **Time-box protocol (the grade buttons are anchored to these numbers):**
