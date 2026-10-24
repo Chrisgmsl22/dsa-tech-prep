@@ -189,11 +189,18 @@
     "trigger": "BFS, grids need directions array, for each direction keep BFSing.\nKeep counter"
   },
   "graphs#3": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-09-03",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 3,
+    "due": "2026-10-28",
+    "kind": "full",
+    "last": "2026-10-21",
+    "prev": {
+      "attempts": 0,
+      "box": 2,
+      "due": "2026-09-03",
+      "last": null
+    },
+    "trigger": "BFS, queues, traverse once land is found, keep track of a counter"
   },
   "graphs#4": {
     "attempts": 0,
@@ -294,11 +301,18 @@
     "trigger": "3 pointers, prev and 2 currs, use a dummy node to append new list, just connect to the smallest node and move on"
   },
   "linked_lists#4": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-09-05",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 4,
+    "due": "2026-11-11",
+    "kind": "full",
+    "last": "2026-10-21",
+    "prev": {
+      "attempts": 0,
+      "box": 2,
+      "due": "2026-09-05",
+      "last": null
+    },
+    "trigger": "Normal traversal + hash set"
   },
   "sliding_window#1": {
     "attempts": 1,
@@ -378,11 +392,18 @@
     "trigger": "Recursion, ask branches which one was bigger, connect each recursive call by the return type"
   },
   "trees#3": {
-    "attempts": 0,
-    "box": 2,
-    "due": "2026-09-03",
-    "last": null,
-    "trigger": ""
+    "attempts": 1,
+    "box": 3,
+    "due": "2026-10-28",
+    "kind": "full",
+    "last": "2026-10-21",
+    "prev": {
+      "attempts": 0,
+      "box": 2,
+      "due": "2026-09-03",
+      "last": null
+    },
+    "trigger": "Recursion, need to get height, and thus, a numeric function is needed"
   },
   "trees#4": {
     "attempts": 0,
